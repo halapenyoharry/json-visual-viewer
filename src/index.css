@@ -1,0 +1,68 @@
+:root {
+  /* Midnight Alaska palette */
+  --midnight-alaska: #0a0e27;
+  --midnight-deep: #080c22;
+  --midnight-horizon: #0d1225;
+
+  /* Cyan Intense */
+  --cyan-intense: #00e5ff;
+  --cyan-deeper: #00d4ee;
+  --cyan-vibrant: #18ffff;
+
+  /* Orange complement */
+  --orange-info: #ff9800;
+  --orange-faint: rgba(255, 152, 0, 0.3);
+
+  /* Horizon glow */
+  --horizon-glow: #1a237e;
+  --horizon-soft: #283593;
+
+  /* Surfaces */
+  --surface-raised: rgba(0, 229, 255, 0.03);
+  --border-subtle: rgba(0, 229, 255, 0.15);
+  --border-accent: rgba(0, 229, 255, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: radial-gradient(
+    ellipse at bottom,
+    var(--midnight-horizon) 0%,
+    var(--midnight-alaska) 40%,
+    var(--midnight-deep) 100%
+  );
+  color: var(--cyan-vibrant);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--midnight-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.4);
+}

@@ -1,0 +1,81 @@
+.graph-panel {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--midnight-alaska);
+}
+
+.graph-error {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 50, 50, 0.15);
+  border: 1px solid rgba(255, 50, 50, 0.4);
+  border-radius: 8px;
+  color: #ff6b6b;
+  font-size: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 50, 50, 0.3);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.node-limit-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--orange-info);
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+.graph-controls {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+}
+
+.graph-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--midnight-deep);
+  border: 1px solid var(--border-subtle);
+  color: var(--cyan-deeper);
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.graph-ctrl-btn:hover {
+  border-color: var(--cyan-intense);
+  color: var(--cyan-vibrant);
+  background: rgba(0, 229, 255, 0.08);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}

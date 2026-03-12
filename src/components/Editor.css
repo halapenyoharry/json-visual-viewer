@@ -1,0 +1,8 @@
+.editor-panel {
+  width: 400px;
+  min-width: 300px;
+  height: 100%;
+  border-right: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow: hidden;
+}
