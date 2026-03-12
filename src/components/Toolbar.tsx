@@ -31,12 +31,8 @@ export function Toolbar() {
   };
 
   return (
-    <div className="toolbar">
-      <div className="toolbar-left">
-        <span className="toolbar-title">JSON Visual Viewer</span>
-      </div>
-
-      <div className="toolbar-center">
+    <div className="toolbar" data-tauri-drag-region>
+      <div className="toolbar-controls">
         <button className="toolbar-btn" onClick={handleFileOpen} title="Open JSON file">
           Open
         </button>
@@ -62,7 +58,7 @@ export function Toolbar() {
         </div>
       </div>
 
-      <div className="toolbar-right">
+      <div className="toolbar-right" data-tauri-drag-region>
         <span className="toolbar-hint dim">Scroll to zoom · Drag to pan</span>
       </div>
     </div>

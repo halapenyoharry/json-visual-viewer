@@ -3,27 +3,17 @@
   align-items: center;
   justify-content: space-between;
   height: 42px;
-  padding: 0 16px;
+  /* 80px left padding clears macOS traffic lights */
+  padding: 0 16px 0 80px;
   background: var(--midnight-deep);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
   gap: 12px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.toolbar-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cyan-vibrant);
-  letter-spacing: 0.05em;
-}
-
-.toolbar-center {
+.toolbar-controls {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -32,6 +22,8 @@
 .toolbar-right {
   display: flex;
   align-items: center;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .toolbar-hint {

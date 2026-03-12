@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "JSON Visual Viewer",
+  "productName": "JVV",
   "version": "0.1.0",
   "identifier": "com.halapenyoharry.json-visual-viewer",
   "build": {
@@ -12,11 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "JSON Visual Viewer",
+        "title": "JVV",
         "width": 1200,
         "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "theme": "Dark"
       }
     ],
     "security": {
