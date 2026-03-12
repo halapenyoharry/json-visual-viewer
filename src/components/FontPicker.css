@@ -1,0 +1,47 @@
+.font-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.font-picker-label {
+  font-size: 13px;
+  color: var(--cyan-deeper);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.font-picker-select {
+  background: transparent;
+  color: var(--cyan-deeper);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  /* tiny arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%2300d4ee'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
+}
+
+.font-picker-select:hover {
+  border-color: var(--cyan-intense);
+  color: var(--cyan-vibrant);
+}
+
+.font-picker-select:focus {
+  border-color: var(--cyan-intense);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
+}
+
+.font-picker-select option {
+  background: var(--midnight-deep);
+  color: var(--cyan-vibrant);
+}

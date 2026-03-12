@@ -1,5 +1,6 @@
 import type { LayoutDirection } from "jsoncrack-react";
 import { useStore } from "../store/useStore";
+import { FontPicker } from "./FontPicker";
 import "./Toolbar.css";
 
 const LAYOUTS: { value: LayoutDirection; label: string }[] = [
@@ -56,6 +57,8 @@ export function Toolbar() {
             </button>
           ))}
         </div>
+        <div className="toolbar-divider" />
+        <FontPicker />
       </div>
 
       <div className="toolbar-right" data-tauri-drag-region>

@@ -28,3 +28,7 @@ src-tauri/target/
 
 # App logs
 app.log
+
+# Original accessible-fonts package (integrated into src/)
+accessible-fonts/
+accessible-fonts.zip
