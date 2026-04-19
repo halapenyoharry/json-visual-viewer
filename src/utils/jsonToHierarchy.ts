@@ -4,6 +4,15 @@ export interface HierarchyNode {
   _value?: unknown;
 }
 
+export function countHierarchyNodes(node: HierarchyNode): number {
+  if (!node.children) return 1;
+  let count = 1;
+  for (const child of node.children) {
+    count += countHierarchyNodes(child);
+  }
+  return count;
+}
+
 /**
  * Converts any arbitrary JSON structure into a purely nested d3.hierarchy compatible layout.
  * @param json The parsed JSON object/array/primitive

@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 import { useStore } from "../store/useStore";
-import { jsonToHierarchy } from "../utils/jsonToHierarchy";
+import { jsonToHierarchy, countHierarchyNodes } from "../utils/jsonToHierarchy";
 import type { HierarchyNode } from "../utils/jsonToHierarchy";
 import { useViewSurface } from "./useViewSurface";
+import { PerfWarning } from "./PerfWarning";
 import "./CirclesView.css";
+
+const CIRCLES_NODE_THRESHOLD = 5000;
 
 type PackNode = d3.HierarchyCircularNode<HierarchyNode>;
 
@@ -93,9 +96,17 @@ export function CirclesView() {
     }
   }, [json, isExplodedView, showArrayIndices]);
 
+  const nodeCount = useMemo(() => countHierarchyNodes(rootData), [rootData]);
+  const [bypassPerf, setBypassPerf] = useState(false);
+  useEffect(() => {
+    setBypassPerf(false);
+  }, [nodeCount]);
+  const perfBlocked = nodeCount > CIRCLES_NODE_THRESHOLD && !bypassPerf;
+
   useEffect(() => {
     if (!containerRef.current || !rootData) return;
     if (size.width === 0 || size.height === 0) return;
+    if (perfBlocked) return;
 
     if (svgRef.current) {
       svgRef.current.remove();
@@ -303,17 +314,25 @@ export function CirclesView() {
         svgRef.current = null;
       }
     };
-  }, [rootData, size]);
+  }, [rootData, size, perfBlocked]);
 
   return (
     <div className="circles-panel" ref={containerRef}>
-      <button
-        className="view-reset-btn"
-        onClick={() => resetRef.current()}
-        title="Reset view"
-      >
-        ⤢
-      </button>
+      {perfBlocked ? (
+        <PerfWarning
+          nodeCount={nodeCount}
+          viewLabel="Circles"
+          onBypass={() => setBypassPerf(true)}
+        />
+      ) : (
+        <button
+          className="view-reset-btn"
+          onClick={() => resetRef.current()}
+          title="Reset view"
+        >
+          ⤢
+        </button>
+      )}
     </div>
   );
 }

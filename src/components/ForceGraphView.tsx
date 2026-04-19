@@ -1,9 +1,12 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import * as d3 from "d3";
 import type { GraphNode } from "../graphDetect";
 import { useStore } from "../store/useStore";
 import { useViewSurface } from "./useViewSurface";
+import { PerfWarning } from "./PerfWarning";
 import "./ForceGraphView.css";
+
+const GRAPH_NODE_THRESHOLD = 500;
 
 interface SimNode extends GraphNode, d3.SimulationNodeDatum {}
 interface SimLink extends d3.SimulationLinkDatum<SimNode> {
@@ -16,6 +19,12 @@ export function ForceGraphView() {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
   const resetRef = useRef<() => void>(() => {});
+  const nodeCount = graph?.nodes.length ?? 0;
+  const [bypassPerf, setBypassPerf] = useState(false);
+  useEffect(() => {
+    setBypassPerf(false);
+  }, [nodeCount]);
+  const perfBlocked = nodeCount > GRAPH_NODE_THRESHOLD && !bypassPerf;
 
   const destroyGraph = useCallback(() => {
     if (simulationRef.current) {
@@ -31,6 +40,7 @@ export function ForceGraphView() {
   useEffect(() => {
     if (!containerRef.current || !graph) return;
     if (size.width === 0 || size.height === 0) return;
+    if (perfBlocked) return;
 
     destroyGraph();
 
@@ -207,7 +217,7 @@ export function ForceGraphView() {
     return () => {
       destroyGraph();
     };
-  }, [graph, destroyGraph, size]);
+  }, [graph, destroyGraph, size, perfBlocked]);
 
   if (!graph) {
     return (
@@ -221,13 +231,21 @@ export function ForceGraphView() {
 
   return (
     <div className="force-graph-panel" ref={containerRef}>
-      <button
-        className="view-reset-btn"
-        onClick={() => resetRef.current()}
-        title="Reset view"
-      >
-        ⤢
-      </button>
+      {perfBlocked ? (
+        <PerfWarning
+          nodeCount={nodeCount}
+          viewLabel="Graph"
+          onBypass={() => setBypassPerf(true)}
+        />
+      ) : (
+        <button
+          className="view-reset-btn"
+          onClick={() => resetRef.current()}
+          title="Reset view"
+        >
+          ⤢
+        </button>
+      )}
     </div>
   );
 }

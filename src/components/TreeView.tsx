@@ -1,10 +1,13 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import * as d3 from "d3";
 import { useStore } from "../store/useStore";
-import { jsonToHierarchy } from "../utils/jsonToHierarchy";
+import { jsonToHierarchy, countHierarchyNodes } from "../utils/jsonToHierarchy";
 import type { HierarchyNode } from "../utils/jsonToHierarchy";
 import { useViewSurface } from "./useViewSurface";
+import { PerfWarning } from "./PerfWarning";
 import "./TreeView.css";
+
+const TREE_NODE_THRESHOLD = 10000;
 
 export function TreeView() {
   const { containerRef, size } = useViewSurface();
@@ -30,9 +33,17 @@ export function TreeView() {
     }
   }, [json, isExplodedView, showArrayIndices]);
 
+  const nodeCount = useMemo(() => countHierarchyNodes(rootData), [rootData]);
+  const [bypassPerf, setBypassPerf] = useState(false);
+  useEffect(() => {
+    setBypassPerf(false);
+  }, [nodeCount]);
+  const perfBlocked = nodeCount > TREE_NODE_THRESHOLD && !bypassPerf;
+
   useEffect(() => {
     if (!containerRef.current || !rootData) return;
     if (size.width === 0 || size.height === 0) return;
+    if (perfBlocked) return;
 
     if (svgRef.current) {
       svgRef.current.remove();
@@ -170,17 +181,25 @@ export function TreeView() {
          svgRef.current = null;
       }
     };
-  }, [rootData, treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors, size, showArrayIndices]);
+  }, [rootData, treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors, size, showArrayIndices, perfBlocked]);
 
   return (
     <div className="graph-panel" ref={containerRef} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
-      <button
-        className="view-reset-btn"
-        onClick={() => resetRef.current()}
-        title="Reset view"
-      >
-        ⤢
-      </button>
+      {perfBlocked ? (
+        <PerfWarning
+          nodeCount={nodeCount}
+          viewLabel="Tree"
+          onBypass={() => setBypassPerf(true)}
+        />
+      ) : (
+        <button
+          className="view-reset-btn"
+          onClick={() => resetRef.current()}
+          title="Reset view"
+        >
+          ⤢
+        </button>
+      )}
     </div>
   );
 }
