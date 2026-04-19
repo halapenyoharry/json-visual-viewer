@@ -1,14 +1,14 @@
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import * as d3 from "d3";
 import { useStore } from "../store/useStore";
 import { jsonToHierarchy } from "../utils/jsonToHierarchy";
 import type { HierarchyNode } from "../utils/jsonToHierarchy";
+import { useViewSurface } from "./useViewSurface";
 import "./TreeView.css";
 
 export function TreeView() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
   const {
     json,
     isExplodedView,
@@ -19,17 +19,6 @@ export function TreeView() {
     treeColors,
     showArrayIndices,
   } = useStore();
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const update = () =>
-      setSize({ width: el.clientWidth, height: el.clientHeight });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const rootData = useMemo(() => {
     try {

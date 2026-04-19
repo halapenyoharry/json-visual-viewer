@@ -7,12 +7,56 @@ import { CirclesSettings } from "./components/CirclesSettings";
 import { ForceGraphView } from "./components/ForceGraphView";
 import { GraphSettings } from "./components/GraphSettings";
 
-// Contract every view should honor:
-//   - Render itself into its panel, filling the available space
-//   - Use a ResizeObserver so it redraws when its container resizes
-//   - Clean up all DOM/SVG/simulations on unmount
-//   - Provide its own zoom/pan affordance appropriate to the view
-//   - Render an empty/error state when the JSON is unsuitable for it
+/**
+ * VIEWS REGISTRY
+ * ==============
+ * The single source of truth for which views exist. Toolbar buttons,
+ * routing in App.tsx, control panel content, and the top-right hint text
+ * all wire themselves up by iterating VIEWS.
+ *
+ * ADDING A NEW VIEW — four steps:
+ *
+ * 1. Add the view's string id to the ViewMode union in
+ *    src/store/useStore.ts.
+ *
+ * 2. Create src/components/YourView.tsx — a React FC with no props.
+ *    Reference implementations:
+ *      - src/components/TreeView.tsx       (d3.tree + d3.zoom)
+ *      - src/components/CirclesView.tsx    (d3.pack + click-to-zoom)
+ *      - src/components/ForceGraphView.tsx (d3.forceSimulation + d3.drag)
+ *
+ * 3. Create src/components/YourSettings.tsx — a React FC returning a
+ *    fragment of <div className="settings-section"> blocks. Compose
+ *    shared sections as needed:
+ *      - ArrayDisplaySection — Show [0] / Hide indices
+ *      - ExplodeToggle       — Compact / Exploded
+ *
+ * 4. Add an entry to the VIEWS array below with id, label, titleTip,
+ *    hint, view, settings, and optional requiresGraph.
+ *
+ * VIEW CONTRACT — every view must:
+ *
+ *   [surface]    Use useViewSurface() from ./components/useViewSurface
+ *                to get { containerRef, size }. This guarantees the view
+ *                redraws when its container resizes (toggling the editor
+ *                or control panel, window resize, etc.).
+ *
+ *   [zoom/pan]   Provide scroll-to-zoom and drag-to-pan via d3.zoom,
+ *                OR an equivalent click-to-zoom interaction (like
+ *                CirclesView). Users should never feel "stuck" in a view.
+ *
+ *   [cleanup]    On unmount, remove the SVG/canvas, stop any simulations,
+ *                disconnect any observers not owned by useViewSurface.
+ *                Return a cleanup from the draw useEffect.
+ *
+ *   [empty]      When the JSON is unsuitable (no graph detected, invalid
+ *                JSON, etc.), render a graceful fallback inside the same
+ *                container class as the happy path. Don't crash.
+ *
+ *   [local]      Keep view-local UI state (current focus, zoom transform)
+ *                inside the view. Only things that need to persist or be
+ *                shared across views belong in the Zustand store.
+ */
 export interface ViewDefinition {
   id: ViewMode;
   label: string;

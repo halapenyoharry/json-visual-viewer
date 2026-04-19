@@ -1,7 +1,8 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import * as d3 from "d3";
 import type { GraphNode } from "../graphDetect";
 import { useStore } from "../store/useStore";
+import { useViewSurface } from "./useViewSurface";
 import "./ForceGraphView.css";
 
 interface SimNode extends GraphNode, d3.SimulationNodeDatum {}
@@ -11,21 +12,9 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 
 export function ForceGraphView() {
   const graph = useStore((s) => s.detectedGraph);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const update = () =>
-      setSize({ width: el.clientWidth, height: el.clientHeight });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const destroyGraph = useCallback(() => {
     if (simulationRef.current) {
