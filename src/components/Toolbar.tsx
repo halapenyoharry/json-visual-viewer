@@ -1,5 +1,6 @@
 import { useStore } from "../store/useStore";
 import { VIEWS, getView } from "../viewsRegistry";
+import { openJsonFile, saveCurrentJson, exportCurrentViewAsSvg } from "../utils/fileIO";
 import "./Toolbar.css";
 
 export function Toolbar() {
@@ -15,47 +16,37 @@ export function Toolbar() {
 
   const currentView = getView(viewMode);
 
-  const handleFileOpen = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json,.jsonc";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const text = ev.target?.result as string;
-        const store = useStore.getState();
-        store.setJson(text);
-        if (store.graphAvailable) {
-          store.setViewMode("graph");
-        } else {
-          store.setViewMode("tree");
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
   return (
     <div className="toolbar" data-tauri-drag-region>
       <div className="toolbar-controls">
-        <button className="toolbar-btn" onClick={handleFileOpen} title="Open JSON file">
+        <button className="toolbar-btn" onClick={openJsonFile} title="Open JSON file (⌘O)">
           Open
         </button>
+        <button className="toolbar-btn" onClick={saveCurrentJson} title="Save JSON (⌘S)">
+          Save
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={exportCurrentViewAsSvg}
+          title="Export current view as SVG (⌘⇧P)"
+        >
+          Export SVG
+        </button>
+        <div className="toolbar-divider" />
         <button
           className={`toolbar-btn ${showEditor ? "active" : ""}`}
           onClick={toggleEditor}
-          title="Toggle editor"
+          title="Toggle editor (⌘E)"
         >
           Editor
         </button>
         <div className="toolbar-divider" />
         <div className="layout-group">
-          {VIEWS.map((v) => {
+          {VIEWS.map((v, idx) => {
             const disabled = v.requiresGraph && !graphAvailable;
-            const title = disabled ? "No graph structure detected" : v.titleTip;
+            const title = disabled
+              ? "No graph structure detected"
+              : `${v.titleTip} (⌘${idx + 1})`;
             return (
               <button
                 key={v.id}
@@ -72,7 +63,7 @@ export function Toolbar() {
         <button
           className={`toolbar-btn ${showControlPanel ? "active" : ""}`}
           onClick={toggleControlPanel}
-          title="Toggle control panel"
+          title="Toggle control panel (⌘L)"
         >
           ⚙️ Control Panel
         </button>

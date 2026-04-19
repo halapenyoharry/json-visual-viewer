@@ -1,22 +1,71 @@
+import { useEffect } from "react";
 import { Toolbar } from "./components/Toolbar";
 import { Editor } from "./components/Editor";
 import { ControlPanel } from "./components/ControlPanel";
+import { ViewErrorBoundary } from "./components/ViewErrorBoundary";
 import { useStore } from "./store/useStore";
-import { getView } from "./viewsRegistry";
+import { VIEWS, getView } from "./viewsRegistry";
+import { openJsonFile, saveCurrentJson, exportCurrentViewAsSvg } from "./utils/fileIO";
 import "./App.css";
 
 function App() {
   const showEditor = useStore((s) => s.showEditor);
   const viewMode = useStore((s) => s.viewMode);
   const showControlPanel = useStore((s) => s.showControlPanel);
-  const ViewComponent = getView(viewMode).view;
+  const view = getView(viewMode);
+  const ViewComponent = view.view;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const cmd = e.metaKey || e.ctrlKey;
+      if (!cmd) return;
+
+      switch (e.key.toLowerCase()) {
+        case "o":
+          e.preventDefault();
+          openJsonFile();
+          return;
+        case "s":
+          e.preventDefault();
+          saveCurrentJson();
+          return;
+        case "e":
+          e.preventDefault();
+          useStore.getState().toggleEditor();
+          return;
+        case "l":
+          e.preventDefault();
+          useStore.getState().toggleControlPanel();
+          return;
+        case "p":
+          if (e.shiftKey) {
+            e.preventDefault();
+            exportCurrentViewAsSvg();
+          }
+          return;
+      }
+
+      if (/^[1-9]$/.test(e.key)) {
+        const idx = Number(e.key) - 1;
+        const target = VIEWS[idx];
+        if (!target) return;
+        if (target.requiresGraph && !useStore.getState().graphAvailable) return;
+        e.preventDefault();
+        useStore.getState().setViewMode(target.id);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <div className="app">
       <Toolbar />
       <div className="app-body">
         {showEditor && <Editor />}
-        <ViewComponent />
+        <ViewErrorBoundary key={viewMode} viewLabel={view.label}>
+          <ViewComponent />
+        </ViewErrorBoundary>
         {showControlPanel && <ControlPanel />}
       </div>
     </div>
