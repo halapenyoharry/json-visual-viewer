@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 import { getSavedFont, saveFont, applyFont } from "../fonts";
 import { detectGraph } from "../graphDetect";
@@ -96,48 +97,67 @@ function tryDetectGraph(jsonStr: string): DetectedGraph | null {
 
 const initialGraph = tryDetectGraph(initialJson);
 
-export const useStore = create<AppState>((set) => ({
-  json: initialJson,
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      json: initialJson,
 
-  showEditor: true,
-  showControlPanel: false,
-  fontId: initialFont,
-  viewMode: initialGraph !== null ? "graph" : "tree",
-  detectedGraph: initialGraph,
-  graphAvailable: initialGraph !== null,
-  isExplodedView: false,
-  treeLayout: "cluster",
-  treeDirection: "LR",
-  treeSpacing: { dx: 14, dy: 200 },
-  treeFontSize: 11,
-  treeColors: { node: "#00e5ff", link: "#555555" },
-  showArrayIndices: true,
+      showEditor: true,
+      showControlPanel: false,
+      fontId: initialFont,
+      viewMode: initialGraph !== null ? "graph" : "tree",
+      detectedGraph: initialGraph,
+      graphAvailable: initialGraph !== null,
+      isExplodedView: false,
+      treeLayout: "cluster",
+      treeDirection: "LR",
+      treeSpacing: { dx: 14, dy: 200 },
+      treeFontSize: 11,
+      treeColors: { node: "#00e5ff", link: "#555555" },
+      showArrayIndices: true,
 
-  setJson: (json) => {
-    const graph = tryDetectGraph(json);
-    set({
-      json,
-      detectedGraph: graph,
-      graphAvailable: graph !== null,
-    });
-  },
+      setJson: (json) => {
+        const graph = tryDetectGraph(json);
+        set({
+          json,
+          detectedGraph: graph,
+          graphAvailable: graph !== null,
+        });
+      },
 
-  toggleEditor: () => set((s) => ({ showEditor: !s.showEditor })),
-  toggleControlPanel: () => set((s) => ({ showControlPanel: !s.showControlPanel })),
-  setFont: (id) => {
-    applyFont(id);
-    saveFont(id);
-    set({ fontId: id });
-  },
-  setViewMode: (viewMode) => set({ viewMode }),
-  setIsExplodedView: (isExplodedView) => set({ isExplodedView }),
-  setTreeLayout: (treeLayout) => set({ treeLayout }),
-  setTreeDirection: (treeDirection) => set({ treeDirection }),
-  setTreeSpacing: (treeSpacing) => set({ treeSpacing }),
-  setTreeFontSize: (treeFontSize) => set({ treeFontSize }),
-  setTreeColors: (treeColors) => set({ treeColors }),
-  setShowArrayIndices: (showArrayIndices) => set({ showArrayIndices }),
-}));
+      toggleEditor: () => set((s) => ({ showEditor: !s.showEditor })),
+      toggleControlPanel: () => set((s) => ({ showControlPanel: !s.showControlPanel })),
+      setFont: (id) => {
+        applyFont(id);
+        saveFont(id);
+        set({ fontId: id });
+      },
+      setViewMode: (viewMode) => set({ viewMode }),
+      setIsExplodedView: (isExplodedView) => set({ isExplodedView }),
+      setTreeLayout: (treeLayout) => set({ treeLayout }),
+      setTreeDirection: (treeDirection) => set({ treeDirection }),
+      setTreeSpacing: (treeSpacing) => set({ treeSpacing }),
+      setTreeFontSize: (treeFontSize) => set({ treeFontSize }),
+      setTreeColors: (treeColors) => set({ treeColors }),
+      setShowArrayIndices: (showArrayIndices) => set({ showArrayIndices }),
+    }),
+    {
+      name: "jvv-state",
+      partialize: (state) => ({
+        viewMode: state.viewMode,
+        showEditor: state.showEditor,
+        showControlPanel: state.showControlPanel,
+        isExplodedView: state.isExplodedView,
+        showArrayIndices: state.showArrayIndices,
+        treeLayout: state.treeLayout,
+        treeDirection: state.treeDirection,
+        treeSpacing: state.treeSpacing,
+        treeFontSize: state.treeFontSize,
+        treeColors: state.treeColors,
+      }),
+    }
+  )
+);
 
 // Apply saved font on load
 applyFont(initialFont);

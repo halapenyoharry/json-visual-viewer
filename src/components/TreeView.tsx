@@ -9,6 +9,7 @@ import "./TreeView.css";
 export function TreeView() {
   const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const resetRef = useRef<() => void>(() => {});
   const {
     json,
     isExplodedView,
@@ -159,6 +160,10 @@ export function TreeView() {
        .scale(1);
     svg.call(zoom.transform as never, defaultTransform);
 
+    resetRef.current = () => {
+      svg.transition().duration(500).call(zoom.transform as never, defaultTransform);
+    };
+
     return () => {
       if (svgRef.current) {
          svgRef.current.remove();
@@ -167,5 +172,15 @@ export function TreeView() {
     };
   }, [rootData, treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors, size, showArrayIndices]);
 
-  return <div className="graph-panel" ref={containerRef} style={{ width: "100%", height: "100%", overflow: "hidden" }} />;
+  return (
+    <div className="graph-panel" ref={containerRef} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+      <button
+        className="view-reset-btn"
+        onClick={() => resetRef.current()}
+        title="Reset view"
+      >
+        ⤢
+      </button>
+    </div>
+  );
 }

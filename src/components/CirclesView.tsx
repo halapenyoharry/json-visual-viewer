@@ -81,6 +81,7 @@ function fitWrappedLeafText(
 export function CirclesView() {
   const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const resetRef = useRef<() => void>(() => {});
   const { json, isExplodedView, showArrayIndices } = useStore();
 
   const rootData = useMemo<HierarchyNode>(() => {
@@ -138,7 +139,9 @@ export function CirclesView() {
     let focus: PackNode = root;
     let view: [number, number, number] = [root.x, root.y, root.r * 2];
 
-    const node = svg
+    const panZoomGroup = svg.append("g").attr("class", "circles-pan-zoom");
+
+    const node = panZoomGroup
       .append("g")
       .selectAll<SVGCircleElement, PackNode>("circle")
       .data(root.descendants().slice(1))
@@ -169,7 +172,7 @@ export function CirclesView() {
         }
       });
 
-    const label = svg
+    const label = panZoomGroup
       .append("g")
       .attr("class", "circle-labels")
       .attr("pointer-events", "none")
@@ -212,9 +215,35 @@ export function CirclesView() {
       }
     });
 
+    // d3.zoom on the whole svg — layered ON TOP of Bostock's click-to-zoom
+    // focus semantics. User can scroll/drag to pan & zoom freely; click-to-
+    // zoom still navigates between focuses. Reset restores both.
+    let isZoomDrag = false;
+    const zoomBehavior = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.25, 12])
+      .on("start", () => {
+        isZoomDrag = false;
+      })
+      .on("zoom", (event) => {
+        if (event.sourceEvent) isZoomDrag = true;
+        panZoomGroup.attr("transform", event.transform.toString());
+      });
+
+    svg.call(zoomBehavior).on("dblclick.zoom", null);
+
     svg.on("click", () => {
+      if (isZoomDrag) return;
       if (focus !== root) zoom(root);
     });
+
+    resetRef.current = () => {
+      svg
+        .transition()
+        .duration(500)
+        .call(zoomBehavior.transform as never, d3.zoomIdentity);
+      if (focus !== root) zoom(root);
+    };
 
     zoomTo(view);
 
@@ -276,5 +305,15 @@ export function CirclesView() {
     };
   }, [rootData, size]);
 
-  return <div className="circles-panel" ref={containerRef} />;
+  return (
+    <div className="circles-panel" ref={containerRef}>
+      <button
+        className="view-reset-btn"
+        onClick={() => resetRef.current()}
+        title="Reset view"
+      >
+        ⤢
+      </button>
+    </div>
+  );
 }

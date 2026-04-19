@@ -15,6 +15,7 @@ export function ForceGraphView() {
   const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
+  const resetRef = useRef<() => void>(() => {});
 
   const destroyGraph = useCallback(() => {
     if (simulationRef.current) {
@@ -51,14 +52,37 @@ export function ForceGraphView() {
 
     // Zoom
     const g = svg.append("g");
-    svg.call(
-      d3
-        .zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.1, 8])
-        .on("zoom", (event) => {
-          g.attr("transform", event.transform);
-        })
-    );
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 8])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+    svg.call(zoom);
+
+    const fitToBounds = () => {
+      const bounds = g.node()?.getBBox();
+      if (!bounds || !svgRef.current) return;
+      const cx = bounds.x + bounds.width / 2;
+      const cy = bounds.y + bounds.height / 2;
+      const scale = Math.min(
+        width / (bounds.width + 100),
+        height / (bounds.height + 100),
+        1.5
+      );
+      svg
+        .transition()
+        .duration(500)
+        .call(
+          zoom.transform as never,
+          d3.zoomIdentity
+            .translate(width / 2, height / 2)
+            .scale(scale)
+            .translate(-cx, -cy)
+        );
+    };
+
+    resetRef.current = fitToBounds;
 
     // Arrow marker for directed edges
     svg
@@ -178,25 +202,7 @@ export function ForceGraphView() {
     });
 
     // Center the view initially after simulation settles a bit
-    setTimeout(() => {
-      const bounds = g.node()?.getBBox();
-      if (bounds && svgRef.current) {
-        const cx = bounds.x + bounds.width / 2;
-        const cy = bounds.y + bounds.height / 2;
-        const scale = Math.min(
-          width / (bounds.width + 100),
-          height / (bounds.height + 100),
-          1.5
-        );
-        svg.call(
-          d3.zoom<SVGSVGElement, unknown>().transform as never,
-          d3.zoomIdentity
-            .translate(width / 2, height / 2)
-            .scale(scale)
-            .translate(-cx, -cy)
-        );
-      }
-    }, 1500);
+    setTimeout(fitToBounds, 1500);
 
     return () => {
       destroyGraph();
@@ -213,5 +219,15 @@ export function ForceGraphView() {
     );
   }
 
-  return <div className="force-graph-panel" ref={containerRef} />;
+  return (
+    <div className="force-graph-panel" ref={containerRef}>
+      <button
+        className="view-reset-btn"
+        onClick={() => resetRef.current()}
+        title="Reset view"
+      >
+        ⤢
+      </button>
+    </div>
+  );
 }
