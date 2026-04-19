@@ -9,10 +9,8 @@ export function Toolbar() {
     viewMode,
     setViewMode,
     graphAvailable,
-    isExplodedView,
-    setIsExplodedView,
-    showSettings,
-    toggleSettings,
+    showControlPanel,
+    toggleControlPanel,
   } = useStore();
 
   const currentView = getView(viewMode);
@@ -70,34 +68,18 @@ export function Toolbar() {
             );
           })}
         </div>
-        {currentView.supportsExplode && (
-          <>
-            <div className="toolbar-divider" />
-            <div className="layout-group">
-              <button
-                className={`toolbar-btn layout-btn ${isExplodedView ? "active" : ""}`}
-                onClick={() => setIsExplodedView(!isExplodedView)}
-                title="Explode primitive values into individual nodes"
-              >
-                Explode
-              </button>
-            </div>
-          </>
-        )}
         <div className="toolbar-divider" />
         <button
-          className={`toolbar-btn ${showSettings ? "active" : ""}`}
-          onClick={toggleSettings}
-          title="Toggle settings panel"
+          className={`toolbar-btn ${showControlPanel ? "active" : ""}`}
+          onClick={toggleControlPanel}
+          title="Toggle control panel"
         >
-          ⚙️ Settings
+          ⚙️ Control Panel
         </button>
       </div>
 
       <div className="toolbar-right" data-tauri-drag-region>
-        <span className="toolbar-hint dim">
-          {viewMode === "graph" ? "Drag nodes · Scroll to zoom" : "Scroll to zoom · Drag to pan"}
-        </span>
+        <span className="toolbar-hint dim">{currentView.hint}</span>
       </div>
     </div>
   );

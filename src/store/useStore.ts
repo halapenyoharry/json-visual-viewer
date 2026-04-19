@@ -52,7 +52,7 @@ export type TreeDirection = "LR" | "RL" | "TB" | "BT";
 interface AppState {
   json: string;
   showEditor: boolean;
-  showSettings: boolean;
+  showControlPanel: boolean;
   fontId: string;
   viewMode: ViewMode;
   detectedGraph: DetectedGraph | null;
@@ -70,7 +70,7 @@ interface AppState {
   // Actions
   setJson: (json: string) => void;
   toggleEditor: () => void;
-  toggleSettings: () => void;
+  toggleControlPanel: () => void;
   setFont: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
   setIsExplodedView: (val: boolean) => void;
@@ -100,7 +100,7 @@ export const useStore = create<AppState>((set) => ({
   json: initialJson,
 
   showEditor: true,
-  showSettings: false,
+  showControlPanel: false,
   fontId: initialFont,
   viewMode: initialGraph !== null ? "graph" : "tree",
   detectedGraph: initialGraph,
@@ -123,7 +123,7 @@ export const useStore = create<AppState>((set) => ({
   },
 
   toggleEditor: () => set((s) => ({ showEditor: !s.showEditor })),
-  toggleSettings: () => set((s) => ({ showSettings: !s.showSettings })),
+  toggleControlPanel: () => set((s) => ({ showControlPanel: !s.showControlPanel })),
   setFont: (id) => {
     applyFont(id);
     saveFont(id);

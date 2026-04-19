@@ -1,6 +1,7 @@
 import { useStore } from "../store/useStore";
 import type { TreeLayoutType, TreeDirection } from "../store/useStore";
 import { ArrayDisplaySection } from "./ArrayDisplaySection";
+import { ExplodeToggle } from "./ExplodeToggle";
 
 const LAYOUTS: { value: TreeLayoutType; label: string }[] = [
   { value: "cluster", label: "Cluster" },
@@ -128,6 +129,7 @@ export function TreeSettings() {
       </div>
 
       <ArrayDisplaySection />
+      <ExplodeToggle />
     </>
   );
 }

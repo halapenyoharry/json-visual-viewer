@@ -1,6 +1,6 @@
 import { Toolbar } from "./components/Toolbar";
 import { Editor } from "./components/Editor";
-import { SettingsSidebar } from "./components/SettingsSidebar";
+import { ControlPanel } from "./components/ControlPanel";
 import { useStore } from "./store/useStore";
 import { getView } from "./viewsRegistry";
 import "./App.css";
@@ -8,7 +8,7 @@ import "./App.css";
 function App() {
   const showEditor = useStore((s) => s.showEditor);
   const viewMode = useStore((s) => s.viewMode);
-  const showSettings = useStore((s) => s.showSettings);
+  const showControlPanel = useStore((s) => s.showControlPanel);
   const ViewComponent = getView(viewMode).view;
 
   return (
@@ -17,7 +17,7 @@ function App() {
       <div className="app-body">
         {showEditor && <Editor />}
         <ViewComponent />
-        {showSettings && <SettingsSidebar />}
+        {showControlPanel && <ControlPanel />}
       </div>
     </div>
   );
