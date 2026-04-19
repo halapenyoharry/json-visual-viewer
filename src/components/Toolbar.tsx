@@ -1,4 +1,5 @@
 import { useStore } from "../store/useStore";
+import { VIEWS, getView } from "../viewsRegistry";
 import "./Toolbar.css";
 
 export function Toolbar() {
@@ -14,6 +15,8 @@ export function Toolbar() {
     toggleSettings,
   } = useStore();
 
+  const currentView = getView(viewMode);
+
   const handleFileOpen = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -26,7 +29,6 @@ export function Toolbar() {
         const text = ev.target?.result as string;
         const store = useStore.getState();
         store.setJson(text);
-        // Auto-switch to graph view if graph detected
         if (store.graphAvailable) {
           store.setViewMode("graph");
         } else {
@@ -53,41 +55,36 @@ export function Toolbar() {
         </button>
         <div className="toolbar-divider" />
         <div className="layout-group">
-          <button
-            className={`toolbar-btn ${viewMode === "tree" ? "active" : ""}`}
-            onClick={() => setViewMode("tree")}
-            title="Tree view (structural)"
-          >
-            Tree
-          </button>
-          <button
-            className={`toolbar-btn ${viewMode === "graph" ? "active" : ""} ${!graphAvailable ? "disabled" : ""}`}
-            onClick={() => graphAvailable && setViewMode("graph")}
-            title={graphAvailable ? "Graph view (relational)" : "No graph structure detected"}
-          >
-            Graph
-          </button>
-          <button
-            className={`toolbar-btn ${viewMode === "circles" ? "active" : ""}`}
-            onClick={() => setViewMode("circles")}
-            title="Circles view (zoomable circle packing)"
-          >
-            Circles
-          </button>
+          {VIEWS.map((v) => {
+            const disabled = v.requiresGraph && !graphAvailable;
+            const title = disabled ? "No graph structure detected" : v.titleTip;
+            return (
+              <button
+                key={v.id}
+                className={`toolbar-btn ${viewMode === v.id ? "active" : ""} ${disabled ? "disabled" : ""}`}
+                onClick={() => !disabled && setViewMode(v.id)}
+                title={title}
+              >
+                {v.label}
+              </button>
+            );
+          })}
         </div>
-        <div className="toolbar-divider" />
-        {(viewMode === "tree" || viewMode === "circles") && (
-          <div className="layout-group">
-            <button
-              className={`toolbar-btn layout-btn ${isExplodedView ? "active" : ""}`}
-              onClick={() => setIsExplodedView(!isExplodedView)}
-              title="Explode primitive values into individual nodes"
-            >
-              Explode
-            </button>
-          </div>
+        {currentView.supportsExplode && (
+          <>
+            <div className="toolbar-divider" />
+            <div className="layout-group">
+              <button
+                className={`toolbar-btn layout-btn ${isExplodedView ? "active" : ""}`}
+                onClick={() => setIsExplodedView(!isExplodedView)}
+                title="Explode primitive values into individual nodes"
+              >
+                Explode
+              </button>
+            </div>
+          </>
         )}
-        {(viewMode === "tree" || viewMode === "graph") && <div className="toolbar-divider" />}
+        <div className="toolbar-divider" />
         <button
           className={`toolbar-btn ${showSettings ? "active" : ""}`}
           onClick={toggleSettings}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import * as d3 from "d3";
-import type { DetectedGraph, GraphNode } from "../graphDetect";
+import type { GraphNode } from "../graphDetect";
+import { useStore } from "../store/useStore";
 import "./ForceGraphView.css";
 
 interface SimNode extends GraphNode, d3.SimulationNodeDatum {}
@@ -8,11 +9,8 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
   label?: string;
 }
 
-interface Props {
-  graph: DetectedGraph;
-}
-
-export function ForceGraphView({ graph }: Props) {
+export function ForceGraphView() {
+  const graph = useStore((s) => s.detectedGraph);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
@@ -215,6 +213,16 @@ export function ForceGraphView({ graph }: Props) {
       destroyGraph();
     };
   }, [graph, destroyGraph, size]);
+
+  if (!graph) {
+    return (
+      <div className="force-graph-panel">
+        <div className="node-limit-warning">
+          No graph structure detected in this JSON.
+        </div>
+      </div>
+    );
+  }
 
   return <div className="force-graph-panel" ref={containerRef} />;
 }

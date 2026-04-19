@@ -81,7 +81,7 @@ export function CirclesView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const { json, isExplodedView } = useStore();
+  const { json, isExplodedView, showArrayIndices } = useStore();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -97,11 +97,11 @@ export function CirclesView() {
   const rootData = useMemo<HierarchyNode>(() => {
     try {
       const parsed = JSON.parse(json);
-      return jsonToHierarchy(parsed, isExplodedView, "root");
+      return jsonToHierarchy(parsed, isExplodedView, "root", showArrayIndices);
     } catch {
       return { name: "Invalid JSON" };
     }
-  }, [json, isExplodedView]);
+  }, [json, isExplodedView, showArrayIndices]);
 
   useEffect(() => {
     if (!containerRef.current || !rootData) return;
