@@ -26,10 +26,18 @@
   font-size: 11px;
 }
 
-.circle-label {
+.circle-label text {
   fill: #DCE5E7;
   paint-order: stroke;
   stroke: rgba(10, 14, 39, 0.85);
   stroke-width: 3px;
   stroke-linejoin: round;
+}
+
+.circle-label .container-text {
+  fill: #E6FBFF;
+}
+
+.circle-label .leaf-text {
+  fill: #DCE5E7;
 }

@@ -114,14 +114,52 @@ export function CirclesView() {
       .append("g")
       .attr("class", "circle-labels")
       .attr("pointer-events", "none")
-      .attr("text-anchor", "middle")
-      .selectAll<SVGTextElement, PackNode>("text")
+      .selectAll<SVGGElement, PackNode>("g.circle-label")
       .data(root.descendants())
-      .join("text")
+      .join("g")
       .attr("class", "circle-label")
-      .style("fill-opacity", (d) => (d.parent === root ? 1 : 0))
-      .style("display", (d) => (d.parent === root ? "inline" : "none"))
-      .text((d) => d.data.name);
+      .style("opacity", (d) => (d.parent === root ? 1 : 0))
+      .style("display", (d) => (d.parent === root ? null : "none"));
+
+    label.each(function (d, i) {
+      const g = d3.select<SVGGElement, PackNode>(this);
+      const isLeaf = !d.children || d.children.length === 0;
+
+      if (isLeaf) {
+        const textEl = g
+          .append("text")
+          .attr("class", "leaf-text")
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .style("font-size", "16px")
+          .text(d.data.name);
+        const bbox = (textEl.node() as SVGTextElement).getBBox();
+        const inner = d.r * 0.85 * 2;
+        const fit = Math.min(
+          inner / Math.max(bbox.width, 1),
+          inner / Math.max(bbox.height, 1),
+          6
+        );
+        textEl.attr("transform", `scale(${fit})`);
+      } else {
+        const pathId = `cp-${i}`;
+        const pathR = d.r * 0.92;
+        g.append("path")
+          .attr("id", pathId)
+          .attr("d", circlePathTopClockwise(pathR))
+          .attr("fill", "none")
+          .attr("stroke", "none");
+        const fontSize = Math.max(d.r * 0.16, 3);
+        g.append("text")
+          .attr("class", "container-text")
+          .style("font-size", `${fontSize}px`)
+          .append("textPath")
+          .attr("href", `#${pathId}`)
+          .attr("startOffset", "0")
+          .style("text-anchor", "start")
+          .text(d.data.name);
+      }
+    });
 
     svg.on("click", () => {
       if (focus !== root) zoom(root);
@@ -134,13 +172,18 @@ export function CirclesView() {
       view = v;
       label.attr(
         "transform",
-        (d) => `translate(${(d.x - v[0]) * k},${(d.y - v[1]) * k})`
+        (d) =>
+          `translate(${(d.x - v[0]) * k},${(d.y - v[1]) * k}) scale(${k})`
       );
       node.attr(
         "transform",
         (d) => `translate(${(d.x - v[0]) * k},${(d.y - v[1]) * k})`
       );
       node.attr("r", (d) => d.r * k);
+    }
+
+    function circlePathTopClockwise(r: number): string {
+      return `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r} A ${r} ${r} 0 0 1 0 ${-r}`;
     }
 
     function zoom(d: PackNode) {
@@ -157,18 +200,20 @@ export function CirclesView() {
         .filter(function (d) {
           return (
             d.parent === focus ||
-            (this as SVGTextElement).style.display === "inline"
+            (this as SVGGElement).style.display !== "none"
           );
         })
-        .transition(transition as unknown as d3.Transition<SVGTextElement, PackNode, SVGGElement, unknown>)
-        .style("fill-opacity", (d) => (d.parent === focus ? 1 : 0))
+        .transition(
+          transition as unknown as d3.Transition<SVGGElement, PackNode, SVGGElement, unknown>
+        )
+        .style("opacity", (d) => (d.parent === focus ? 1 : 0))
         .on("start", function (d) {
           if (d.parent === focus)
-            (this as SVGTextElement).style.display = "inline";
+            (this as SVGGElement).style.display = "";
         })
         .on("end", function (d) {
           if (d.parent !== focus)
-            (this as SVGTextElement).style.display = "none";
+            (this as SVGGElement).style.display = "none";
         });
     }
 
