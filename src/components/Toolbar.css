@@ -76,3 +76,9 @@
   background: var(--border-subtle);
   margin: 0 6px;
 }
+
+.toolbar-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}

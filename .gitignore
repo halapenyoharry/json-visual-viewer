@@ -32,3 +32,10 @@ app.log
 # Original accessible-fonts package (integrated into src/)
 accessible-fonts/
 accessible-fonts.zip
+
+# Local Claude Code settings
+.claude/settings.local.json
+
+# Local archive / personal metadata
+_archive/
+.project-bible.json

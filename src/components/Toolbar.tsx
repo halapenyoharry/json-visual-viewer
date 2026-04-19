@@ -1,18 +1,18 @@
-import type { LayoutDirection } from "jsoncrack-react";
 import { useStore } from "../store/useStore";
-import { FontPicker } from "./FontPicker";
 import "./Toolbar.css";
 
-const LAYOUTS: { value: LayoutDirection; label: string }[] = [
-  { value: "RIGHT", label: "→" },
-  { value: "DOWN", label: "↓" },
-  { value: "LEFT", label: "←" },
-  { value: "UP", label: "↑" },
-];
-
 export function Toolbar() {
-  const { layoutDirection, setLayoutDirection, showEditor, toggleEditor } =
-    useStore();
+  const {
+    showEditor,
+    toggleEditor,
+    viewMode,
+    setViewMode,
+    graphAvailable,
+    isExplodedView,
+    setIsExplodedView,
+    showSettings,
+    toggleSettings,
+  } = useStore();
 
   const handleFileOpen = () => {
     const input = document.createElement("input");
@@ -24,7 +24,14 @@ export function Toolbar() {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const text = ev.target?.result as string;
-        useStore.getState().setJson(text);
+        const store = useStore.getState();
+        store.setJson(text);
+        // Auto-switch to graph view if graph detected
+        if (store.graphAvailable) {
+          store.setViewMode("graph");
+        } else {
+          store.setViewMode("tree");
+        }
       };
       reader.readAsText(file);
     };
@@ -46,23 +53,47 @@ export function Toolbar() {
         </button>
         <div className="toolbar-divider" />
         <div className="layout-group">
-          {LAYOUTS.map((l) => (
-            <button
-              key={l.value}
-              className={`toolbar-btn layout-btn ${layoutDirection === l.value ? "active" : ""}`}
-              onClick={() => setLayoutDirection(l.value)}
-              title={`Layout: ${l.value}`}
-            >
-              {l.label}
-            </button>
-          ))}
+          <button
+            className={`toolbar-btn ${viewMode === "tree" ? "active" : ""}`}
+            onClick={() => setViewMode("tree")}
+            title="Tree view (structural)"
+          >
+            Tree
+          </button>
+          <button
+            className={`toolbar-btn ${viewMode === "graph" ? "active" : ""} ${!graphAvailable ? "disabled" : ""}`}
+            onClick={() => graphAvailable && setViewMode("graph")}
+            title={graphAvailable ? "Graph view (relational)" : "No graph structure detected"}
+          >
+            Graph
+          </button>
         </div>
         <div className="toolbar-divider" />
-        <FontPicker />
+        {viewMode === "tree" && (
+          <div className="layout-group">
+            <button
+              className={`toolbar-btn layout-btn ${isExplodedView ? "active" : ""}`}
+              onClick={() => setIsExplodedView(!isExplodedView)}
+              title="Explode primitive values into individual nodes"
+            >
+              Explode
+            </button>
+          </div>
+        )}
+        {(viewMode === "tree" || viewMode === "graph") && <div className="toolbar-divider" />}
+        <button
+          className={`toolbar-btn ${showSettings ? "active" : ""}`}
+          onClick={toggleSettings}
+          title="Toggle settings panel"
+        >
+          ⚙️ Settings
+        </button>
       </div>
 
       <div className="toolbar-right" data-tauri-drag-region>
-        <span className="toolbar-hint dim">Scroll to zoom · Drag to pan</span>
+        <span className="toolbar-hint dim">
+          {viewMode === "graph" ? "Drag nodes · Scroll to zoom" : "Scroll to zoom · Drag to pan"}
+        </span>
       </div>
     </div>
   );

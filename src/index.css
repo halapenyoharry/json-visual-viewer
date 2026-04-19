@@ -21,6 +21,9 @@
   --surface-raised: rgba(0, 229, 255, 0.03);
   --border-subtle: rgba(0, 229, 255, 0.15);
   --border-accent: rgba(0, 229, 255, 0.3);
+
+  /* Font — overridden by accessible-fonts picker */
+  --jvv-font: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
 * {
@@ -43,7 +46,7 @@ body {
     var(--midnight-deep) 100%
   );
   color: var(--cyan-vibrant);
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: var(--jvv-font);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -65,4 +68,29 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 229, 255, 0.4);
+}
+
+/* Override jsoncrack-react to match Midnight Alaska */
+[class*="canvasWrapper"] {
+  --bg-color: #080c22 !important;
+  --node-fill: #0d1233 !important;
+  --background-node: #0d1233 !important;
+  --background-modifier-accent: rgba(0, 229, 255, 0.06) !important;
+  --interactive-normal: #59b8ff !important;
+  --node-divider: rgba(0, 229, 255, 0.1) !important;
+}
+
+[class*="foreignObject"] {
+  font-family: var(--jvv-font) !important;
+}
+
+/* Node border/stroke to subtle cyan */
+[class*="canvasWrapper"] rect {
+  stroke: rgba(0, 229, 255, 0.12);
+  stroke-width: 1;
+}
+
+/* Edge lines to subtle cyan */
+[class*="canvasWrapper"] path {
+  stroke: rgba(0, 229, 255, 0.2) !important;
 }

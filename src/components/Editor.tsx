@@ -17,15 +17,17 @@ export function Editor() {
             base: "vs-dark",
             inherit: true,
             rules: [
-              { token: "string.key.json", foreground: "18ffff" },
-              { token: "string.value.json", foreground: "ff9800" },
-              { token: "number", foreground: "00e5ff" },
-              { token: "keyword", foreground: "00e5ff" },
-              { token: "delimiter", foreground: "00d4ee" },
+              // Matched to jsoncrack-react dark theme node colors
+              { token: "string.key.json", foreground: "59b8ff" },   // keys — matches node key color
+              { token: "string.value.json", foreground: "DCE5E7" }, // string values — matches node value color
+              { token: "number", foreground: "e8c479" },            // numbers — matches node integer color
+              { token: "keyword.json", foreground: "00DC7D" },      // true/null/false get keyword token
+              { token: "keyword", foreground: "939598" },           // fallback keyword
+              { token: "delimiter", foreground: "636363" },         // brackets, commas
             ],
             colors: {
               "editor.background": "#080c22",
-              "editor.foreground": "#18ffff",
+              "editor.foreground": "#DCE5E7",
               "editor.lineHighlightBackground": "#0d122580",
               "editor.selectionBackground": "#1a237e60",
               "editorCursor.foreground": "#00e5ff",

@@ -73,5 +73,6 @@ export function applyFont(id: string): void {
   const font = FONT_REGISTRY.find((f) => f.id === id);
   if (!font) return;
   document.documentElement.style.fontFamily = font.family;
+  document.documentElement.style.setProperty("--jvv-font", font.family);
   document.documentElement.dataset.font = id;
 }
