@@ -22,6 +22,7 @@ export function SettingsSidebar() {
     treeSpacing, setTreeSpacing,
     treeFontSize, setTreeFontSize,
     treeColors, setTreeColors,
+    showArrayIndices, setShowArrayIndices,
   } = useStore();
 
   return (
@@ -116,6 +117,26 @@ export function SettingsSidebar() {
             />
             <label>Link Stroke Color</label>
           </div>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <div className="settings-section-title">Array Display</div>
+        <div className="settings-group">
+          <button
+            className={`settings-btn ${showArrayIndices ? "active" : ""}`}
+            style={{ flex: 1 }}
+            onClick={() => setShowArrayIndices(true)}
+          >
+            Show [0] [1]
+          </button>
+          <button
+            className={`settings-btn ${!showArrayIndices ? "active" : ""}`}
+            style={{ flex: 1 }}
+            onClick={() => setShowArrayIndices(false)}
+          >
+            Hide indices
+          </button>
         </div>
       </div>
 

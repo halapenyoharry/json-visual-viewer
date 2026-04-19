@@ -65,6 +65,7 @@ interface AppState {
   treeSpacing: { dx: number; dy: number };
   treeFontSize: number;
   treeColors: { node: string; link: string };
+  showArrayIndices: boolean;
 
   // Actions
   setJson: (json: string) => void;
@@ -78,6 +79,7 @@ interface AppState {
   setTreeSpacing: (val: { dx: number; dy: number }) => void;
   setTreeFontSize: (val: number) => void;
   setTreeColors: (val: { node: string; link: string }) => void;
+  setShowArrayIndices: (val: boolean) => void;
 }
 
 const initialFont = getSavedFont() || "system";
@@ -109,6 +111,7 @@ export const useStore = create<AppState>((set) => ({
   treeSpacing: { dx: 14, dy: 200 },
   treeFontSize: 11,
   treeColors: { node: "#00e5ff", link: "#555555" },
+  showArrayIndices: true,
 
   setJson: (json) => {
     const graph = tryDetectGraph(json);
@@ -133,6 +136,7 @@ export const useStore = create<AppState>((set) => ({
   setTreeSpacing: (treeSpacing) => set({ treeSpacing }),
   setTreeFontSize: (treeFontSize) => set({ treeFontSize }),
   setTreeColors: (treeColors) => set({ treeColors }),
+  setShowArrayIndices: (showArrayIndices) => set({ showArrayIndices }),
 }));
 
 // Apply saved font on load

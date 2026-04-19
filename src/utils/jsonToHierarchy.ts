@@ -13,7 +13,8 @@ export interface HierarchyNode {
 export function jsonToHierarchy(
   json: unknown,
   isExplodedView: boolean,
-  nodeName: string = "root"
+  nodeName: string = "root",
+  showArrayIndices: boolean = true
 ): HierarchyNode {
   if (json === null) {
     return { name: isExplodedView ? nodeName : `${nodeName}: null` };
@@ -23,9 +24,16 @@ export function jsonToHierarchy(
     if (json.length === 0) {
       return { name: `${nodeName} []` };
     }
-    const children = json.map((item, index) =>
-      jsonToHierarchy(item, isExplodedView, `[${index}]`)
-    );
+    const children = json.map((item, index) => {
+      // When showArrayIndices is false AND the item is a primitive, use
+      // the primitive's value as the label directly (no `[N]:` prefix).
+      // Objects and arrays inside arrays still get `[N]` because they
+      // need some kind of label, but it's made less noisy.
+      const childName = showArrayIndices
+        ? `[${index}]`
+        : (item !== null && typeof item === "object" ? `[${index}]` : "");
+      return jsonToHierarchy(item, isExplodedView, childName, showArrayIndices);
+    });
     return { name: nodeName, children };
   }
 
@@ -35,7 +43,7 @@ export function jsonToHierarchy(
       return { name: `${nodeName} {}` };
     }
     const children = keys.map((key) =>
-      jsonToHierarchy((json as Record<string, unknown>)[key], isExplodedView, key)
+      jsonToHierarchy((json as Record<string, unknown>)[key], isExplodedView, key, showArrayIndices)
     );
     return { name: nodeName, children };
   }
@@ -50,6 +58,10 @@ export function jsonToHierarchy(
     };
   }
 
-  // Compact View: key: value grouped into one singular text span
+  // Compact View: key: value grouped into one singular text span.
+  // If nodeName is empty (array item with indices hidden), show just the value.
+  if (nodeName === "") {
+    return { name: strVal, _value: json };
+  }
   return { name: `${nodeName}: ${strVal}`, _value: json };
 }

@@ -17,6 +17,7 @@ export function TreeView() {
     treeSpacing,
     treeFontSize,
     treeColors,
+    showArrayIndices,
   } = useStore();
 
   useEffect(() => {
@@ -33,11 +34,11 @@ export function TreeView() {
   const rootData = useMemo(() => {
     try {
       const parsed = JSON.parse(json);
-      return jsonToHierarchy(parsed, isExplodedView, "root");
+      return jsonToHierarchy(parsed, isExplodedView, "root", showArrayIndices);
     } catch {
       return { name: "Invalid JSON" };
     }
-  }, [json, isExplodedView]);
+  }, [json, isExplodedView, showArrayIndices]);
 
   useEffect(() => {
     if (!containerRef.current || !rootData) return;
@@ -175,7 +176,7 @@ export function TreeView() {
          svgRef.current = null;
       }
     };
-  }, [rootData, treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors, size]);
+  }, [rootData, treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors, size, showArrayIndices]);
 
   return <div className="graph-panel" ref={containerRef} style={{ width: "100%", height: "100%", overflow: "hidden" }} />;
 }
