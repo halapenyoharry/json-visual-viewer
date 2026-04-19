@@ -7,6 +7,76 @@ import "./CirclesView.css";
 
 type PackNode = d3.HierarchyCircularNode<HierarchyNode>;
 
+function splitIntoLines(words: string[], n: number): string[] {
+  if (n <= 1) return [words.join(" ")];
+  if (words.length <= n) return words.slice();
+  const totalChars = words.reduce((s, w) => s + w.length, 0);
+  const target = totalChars / n;
+  const lines: string[][] = Array.from({ length: n }, () => [] as string[]);
+  let currentLine = 0;
+  let currentChars = 0;
+  for (const w of words) {
+    if (
+      currentChars > 0 &&
+      currentChars + w.length / 2 >= target &&
+      currentLine < n - 1
+    ) {
+      currentLine++;
+      currentChars = 0;
+    }
+    lines[currentLine].push(w);
+    currentChars += w.length;
+  }
+  return lines.map((l) => l.join(" ")).filter((l) => l.length > 0);
+}
+
+function renderLines(
+  textSel: d3.Selection<SVGTextElement, unknown, null, undefined>,
+  lines: string[]
+): void {
+  textSel.selectAll("tspan").remove();
+  const n = lines.length;
+  const firstDy = n > 1 ? `${-(n - 1) * 0.55}em` : "0";
+  lines.forEach((line, i) => {
+    textSel
+      .append("tspan")
+      .attr("x", 0)
+      .attr("dy", i === 0 ? firstDy : "1.1em")
+      .text(line);
+  });
+}
+
+function fitWrappedLeafText(
+  textSel: d3.Selection<SVGTextElement, unknown, null, undefined>,
+  text: string,
+  r: number
+): void {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    textSel.text("");
+    return;
+  }
+  const node = textSel.node() as SVGTextElement;
+  const maxDiag = r * 1.85;
+  const maxLines = Math.min(words.length, 6);
+  let bestScale = 0;
+  let bestLines: string[] = [text];
+  for (let n = 1; n <= maxLines; n++) {
+    const lines = splitIntoLines(words, n);
+    renderLines(textSel, lines);
+    const bbox = node.getBBox();
+    const diag = Math.hypot(bbox.width, bbox.height);
+    const scale = diag > 0 ? maxDiag / diag : 0;
+    if (scale > bestScale) {
+      bestScale = scale;
+      bestLines = lines;
+    }
+  }
+  renderLines(textSel, bestLines);
+  textSel.attr("transform", `scale(${bestScale})`);
+}
+
+
 export function CirclesView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -131,16 +201,8 @@ export function CirclesView() {
           .attr("class", "leaf-text")
           .attr("text-anchor", "middle")
           .attr("dominant-baseline", "middle")
-          .style("font-size", "16px")
-          .text(d.data.name);
-        const bbox = (textEl.node() as SVGTextElement).getBBox();
-        const inner = d.r * 0.85 * 2;
-        const fit = Math.min(
-          inner / Math.max(bbox.width, 1),
-          inner / Math.max(bbox.height, 1),
-          6
-        );
-        textEl.attr("transform", `scale(${fit})`);
+          .style("font-size", "16px");
+        fitWrappedLeafText(textEl, d.data.name, d.r);
       } else {
         const pathId = `cp-${i}`;
         const pathR = d.r * 0.92;
