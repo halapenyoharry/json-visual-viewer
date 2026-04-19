@@ -67,9 +67,16 @@ export function Toolbar() {
           >
             Graph
           </button>
+          <button
+            className={`toolbar-btn ${viewMode === "circles" ? "active" : ""}`}
+            onClick={() => setViewMode("circles")}
+            title="Circles view (zoomable circle packing)"
+          >
+            Circles
+          </button>
         </div>
         <div className="toolbar-divider" />
-        {viewMode === "tree" && (
+        {(viewMode === "tree" || viewMode === "circles") && (
           <div className="layout-group">
             <button
               className={`toolbar-btn layout-btn ${isExplodedView ? "active" : ""}`}
