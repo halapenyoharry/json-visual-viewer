@@ -4,6 +4,8 @@ import { TreeView } from "./components/TreeView";
 import { TreeSettings } from "./components/TreeSettings";
 import { CirclesView } from "./components/CirclesView";
 import { CirclesSettings } from "./components/CirclesSettings";
+import { MassCirclesView } from "./components/MassCirclesView";
+import { MassCirclesSettings } from "./components/MassCirclesSettings";
 import { ForceGraphView } from "./components/ForceGraphView";
 import { GraphSettings } from "./components/GraphSettings";
 
@@ -92,6 +94,14 @@ export const VIEWS: ViewDefinition[] = [
     hint: "Click circle to zoom · Click background to exit",
     view: CirclesView,
     settings: CirclesSettings,
+  },
+  {
+    id: "mass",
+    label: "Mass",
+    titleTip: "Mass circles (substrate-normalized)",
+    hint: "Click circle to zoom · Sized by mass, not count",
+    view: MassCirclesView,
+    settings: MassCirclesSettings,
   },
 ];
 

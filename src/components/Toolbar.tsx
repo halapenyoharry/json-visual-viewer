@@ -3,6 +3,9 @@ import { VIEWS, getView } from "../viewsRegistry";
 import { openJsonFile, saveCurrentJson, exportCurrentViewAsSvg } from "../utils/fileIO";
 import "./Toolbar.css";
 
+// VS Code webview injects acquireVsCodeApi — use that to detect the context
+const isVSCode = typeof (window as Window & { acquireVsCodeApi?: unknown }).acquireVsCodeApi === "function";
+
 export function Toolbar() {
   const {
     showEditor,
@@ -33,14 +36,16 @@ export function Toolbar() {
           Export SVG
         </button>
         <div className="toolbar-divider" />
-        <button
-          className={`toolbar-btn ${showEditor ? "active" : ""}`}
-          onClick={toggleEditor}
-          title="Toggle editor (⌘E)"
-        >
-          Editor
-        </button>
-        <div className="toolbar-divider" />
+        {!isVSCode && (
+          <button
+            className={`toolbar-btn ${showEditor ? "active" : ""}`}
+            onClick={toggleEditor}
+            title="Toggle editor (⌘E)"
+          >
+            Editor
+          </button>
+        )}
+        {!isVSCode && <div className="toolbar-divider" />}
         <div className="layout-group">
           {VIEWS.map((v, idx) => {
             const disabled = v.requiresGraph && !graphAvailable;

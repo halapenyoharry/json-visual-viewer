@@ -1,0 +1,24 @@
+# Source — not needed in the VSIX
+src/
+src-vscode/
+src-tauri/
+_archive/
+accessible-fonts/
+public/
+
+# Config / build tooling
+vite.config.ts
+vite.webview.config.ts
+tsconfig*.json
+eslint.config.js
+.eslintignore
+.gitignore
+index.html
+package-lock.json
+
+# Dev artifacts
+node_modules/
+dist/
+.vite/
+
+# The extension only needs dist-extension/ and dist-webview/

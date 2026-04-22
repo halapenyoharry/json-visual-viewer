@@ -46,7 +46,7 @@ const SAMPLE_JSON = {
   }
 };
 
-export type ViewMode = "tree" | "graph" | "circles";
+export type ViewMode = "tree" | "graph" | "circles" | "mass";
 export type TreeLayoutType = "cluster" | "tidy";
 export type TreeDirection = "LR" | "RL" | "TB" | "BT";
 

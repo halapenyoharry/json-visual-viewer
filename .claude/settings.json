@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)",
+      "WebFetch(domain:v2.tauri.app)",
+      "Bash(source \"$HOME/.cargo/env\")",
+      "Bash(rustc --version)",
+      "Bash(cargo --version)"
+    ]
+  }
+}

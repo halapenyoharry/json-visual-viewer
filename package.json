@@ -3,12 +3,49 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "publisher": "halapenyoharry",
+  "displayName": "JSON Visual Viewer",
+  "description": "Visualize JSON as interactive tree, force graph, or circle packing",
+  "categories": ["Visualization", "Other"],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./dist-extension/extension.cjs",
+  "activationEvents": [
+    "onCommand:json-visual-viewer.open",
+    "onCommand:json-visual-viewer.viewCurrent"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "json-visual-viewer.open",
+        "title": "JSON Visual Viewer: Open"
+      },
+      {
+        "command": "json-visual-viewer.viewCurrent",
+        "title": "JSON Visual Viewer: View Current File"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "json-visual-viewer.viewCurrent",
+          "when": "resourceExtname == .json",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:webview": "vite build --config vite.webview.config.ts",
+    "build:extension": "esbuild src-vscode/extension.ts --bundle --outfile=dist-extension/extension.cjs --external:vscode --platform=node --format=cjs",
+    "build:vscode": "npm run build:webview && npm run build:extension",
+    "package:vscode": "npm run build:vscode && vsce package"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -25,7 +62,9 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/vscode": "^1.90.0",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vscode/vsce": "^3.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
