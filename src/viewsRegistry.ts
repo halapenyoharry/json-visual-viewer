@@ -8,6 +8,8 @@ import { MassCirclesView } from "./components/MassCirclesView";
 import { MassCirclesSettings } from "./components/MassCirclesSettings";
 import { ForceGraphView } from "./components/ForceGraphView";
 import { GraphSettings } from "./components/GraphSettings";
+import { CytoscapeView } from "./components/CytoscapeView";
+import { CytoscapeSettings } from "./components/CytoscapeSettings";
 
 /**
  * VIEWS REGISTRY
@@ -85,6 +87,15 @@ export const VIEWS: ViewDefinition[] = [
     hint: "Drag nodes · Scroll to zoom",
     view: ForceGraphView,
     settings: GraphSettings,
+    requiresGraph: true,
+  },
+  {
+    id: "cytoscape",
+    label: "Cytoscape",
+    titleTip: "Cytoscape graph (multi-edge, layouts)",
+    hint: "Drag nodes · Scroll to zoom · Multi-edges curve",
+    view: CytoscapeView,
+    settings: CytoscapeSettings,
     requiresGraph: true,
   },
   {

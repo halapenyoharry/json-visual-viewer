@@ -3,10 +3,10 @@ import { useStore } from "../store/useStore";
 import "./Editor.css";
 
 export function Editor() {
-  const { json, setJson } = useStore();
+  const { json, setJson, editorWidth } = useStore();
 
   return (
-    <div className="editor-panel">
+    <div className="editor-panel" style={{ width: editorWidth }}>
       <MonacoEditor
         language="json"
         value={json}

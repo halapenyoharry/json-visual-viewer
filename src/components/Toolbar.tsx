@@ -1,10 +1,9 @@
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store/useStore";
 import { VIEWS, getView } from "../viewsRegistry";
 import { openJsonFile, saveCurrentJson, exportCurrentViewAsSvg } from "../utils/fileIO";
+import { Icon } from "./Icon";
 import "./Toolbar.css";
-
-// VS Code webview injects acquireVsCodeApi — use that to detect the context
-const isVSCode = typeof (window as Window & { acquireVsCodeApi?: unknown }).acquireVsCodeApi === "function";
 
 export function Toolbar() {
   const {
@@ -18,6 +17,26 @@ export function Toolbar() {
   } = useStore();
 
   const currentView = getView(viewMode);
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const viewMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!viewMenuOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!viewMenuRef.current?.contains(e.target as Node)) {
+        setViewMenuOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [viewMenuOpen]);
 
   return (
     <div className="toolbar" data-tauri-drag-region>
@@ -36,33 +55,45 @@ export function Toolbar() {
           Export SVG
         </button>
         <div className="toolbar-divider" />
-        {!isVSCode && (
+        <button
+          className={`toolbar-btn ${showEditor ? "active" : ""}`}
+          onClick={toggleEditor}
+          title="Toggle editor (⌘E)"
+        >
+          Editor
+        </button>
+        <div className="toolbar-divider" />
+        <div className="view-menu" ref={viewMenuRef}>
           <button
-            className={`toolbar-btn ${showEditor ? "active" : ""}`}
-            onClick={toggleEditor}
-            title="Toggle editor (⌘E)"
+            className={`toolbar-btn view-menu-trigger ${viewMenuOpen ? "active" : ""}`}
+            onClick={() => setViewMenuOpen((v) => !v)}
+            title="Switch view"
           >
-            Editor
+            View: {currentView.label} <span className="view-menu-caret">▾</span>
           </button>
-        )}
-        {!isVSCode && <div className="toolbar-divider" />}
-        <div className="layout-group">
-          {VIEWS.map((v, idx) => {
-            const disabled = v.requiresGraph && !graphAvailable;
-            const title = disabled
-              ? "No graph structure detected"
-              : `${v.titleTip} (⌘${idx + 1})`;
-            return (
-              <button
-                key={v.id}
-                className={`toolbar-btn ${viewMode === v.id ? "active" : ""} ${disabled ? "disabled" : ""}`}
-                onClick={() => !disabled && setViewMode(v.id)}
-                title={title}
-              >
-                {v.label}
-              </button>
-            );
-          })}
+          {viewMenuOpen && (
+            <div className="view-menu-list" role="menu">
+              {VIEWS.map((v, idx) => {
+                const disabled = v.requiresGraph && !graphAvailable;
+                return (
+                  <button
+                    key={v.id}
+                    role="menuitem"
+                    className={`view-menu-item ${viewMode === v.id ? "active" : ""} ${disabled ? "disabled" : ""}`}
+                    onClick={() => {
+                      if (disabled) return;
+                      setViewMode(v.id);
+                      setViewMenuOpen(false);
+                    }}
+                    title={disabled ? "No graph structure detected" : v.titleTip}
+                  >
+                    <span className="view-menu-item-label">{v.label}</span>
+                    <span className="view-menu-item-shortcut">⌘{idx + 1}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div className="toolbar-divider" />
         <button
@@ -70,7 +101,7 @@ export function Toolbar() {
           onClick={toggleControlPanel}
           title="Toggle control panel (⌘L)"
         >
-          ⚙️ Control Panel
+          <Icon name="settings" style={{ marginRight: 6 }} /> Control Panel
         </button>
       </div>
 

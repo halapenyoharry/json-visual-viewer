@@ -1,0 +1,16 @@
+.drag-divider {
+  width: 4px;
+  flex: 0 0 4px;
+  cursor: col-resize;
+  background: transparent;
+  border-left: 1px solid var(--border-subtle);
+  transition: background 0.12s ease, border-color 0.12s ease;
+  user-select: none;
+  z-index: 5;
+}
+
+.drag-divider:hover,
+.drag-divider:active {
+  background: rgba(0, 229, 255, 0.18);
+  border-left-color: var(--cyan-intense, #00e5ff);
+}

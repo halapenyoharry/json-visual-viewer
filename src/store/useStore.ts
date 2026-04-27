@@ -46,7 +46,15 @@ const SAMPLE_JSON = {
   }
 };
 
-export type ViewMode = "tree" | "graph" | "circles" | "mass";
+export type ViewMode = "tree" | "graph" | "cytoscape" | "circles" | "mass";
+export type CytoscapeLayout =
+  | "fcose"
+  | "cose"
+  | "breadthfirst"
+  | "concentric"
+  | "circle"
+  | "grid"
+  | "random";
 export type TreeLayoutType = "cluster" | "tidy";
 export type TreeDirection = "LR" | "RL" | "TB" | "BT";
 
@@ -54,6 +62,7 @@ interface AppState {
   json: string;
   showEditor: boolean;
   showControlPanel: boolean;
+  editorWidth: number;
   fontId: string;
   viewMode: ViewMode;
   detectedGraph: DetectedGraph | null;
@@ -68,10 +77,15 @@ interface AppState {
   treeColors: { node: string; link: string };
   showArrayIndices: boolean;
 
+  // Cytoscape Settings
+  cytoscapeLayout: CytoscapeLayout;
+  cytoscapeCurveEdges: boolean;
+
   // Actions
   setJson: (json: string) => void;
   toggleEditor: () => void;
   toggleControlPanel: () => void;
+  setEditorWidth: (px: number) => void;
   setFont: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
   setIsExplodedView: (val: boolean) => void;
@@ -81,6 +95,8 @@ interface AppState {
   setTreeFontSize: (val: number) => void;
   setTreeColors: (val: { node: string; link: string }) => void;
   setShowArrayIndices: (val: boolean) => void;
+  setCytoscapeLayout: (val: CytoscapeLayout) => void;
+  setCytoscapeCurveEdges: (val: boolean) => void;
 }
 
 const initialFont = getSavedFont() || "system";
@@ -104,6 +120,7 @@ export const useStore = create<AppState>()(
 
       showEditor: true,
       showControlPanel: false,
+      editorWidth: 400,
       fontId: initialFont,
       viewMode: initialGraph !== null ? "graph" : "tree",
       detectedGraph: initialGraph,
@@ -115,6 +132,8 @@ export const useStore = create<AppState>()(
       treeFontSize: 11,
       treeColors: { node: "#00e5ff", link: "#555555" },
       showArrayIndices: true,
+      cytoscapeLayout: "fcose",
+      cytoscapeCurveEdges: true,
 
       setJson: (json) => {
         const graph = tryDetectGraph(json);
@@ -127,6 +146,7 @@ export const useStore = create<AppState>()(
 
       toggleEditor: () => set((s) => ({ showEditor: !s.showEditor })),
       toggleControlPanel: () => set((s) => ({ showControlPanel: !s.showControlPanel })),
+      setEditorWidth: (px) => set({ editorWidth: Math.max(200, Math.min(px, 4000)) }),
       setFont: (id) => {
         applyFont(id);
         saveFont(id);
@@ -140,6 +160,8 @@ export const useStore = create<AppState>()(
       setTreeFontSize: (treeFontSize) => set({ treeFontSize }),
       setTreeColors: (treeColors) => set({ treeColors }),
       setShowArrayIndices: (showArrayIndices) => set({ showArrayIndices }),
+      setCytoscapeLayout: (cytoscapeLayout) => set({ cytoscapeLayout }),
+      setCytoscapeCurveEdges: (cytoscapeCurveEdges) => set({ cytoscapeCurveEdges }),
     }),
     {
       name: "jvv-state",
@@ -147,6 +169,7 @@ export const useStore = create<AppState>()(
         viewMode: state.viewMode,
         showEditor: state.showEditor,
         showControlPanel: state.showControlPanel,
+        editorWidth: state.editorWidth,
         isExplodedView: state.isExplodedView,
         showArrayIndices: state.showArrayIndices,
         treeLayout: state.treeLayout,
@@ -154,6 +177,8 @@ export const useStore = create<AppState>()(
         treeSpacing: state.treeSpacing,
         treeFontSize: state.treeFontSize,
         treeColors: state.treeColors,
+        cytoscapeLayout: state.cytoscapeLayout,
+        cytoscapeCurveEdges: state.cytoscapeCurveEdges,
       }),
     }
   )

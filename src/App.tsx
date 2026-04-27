@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Toolbar } from "./components/Toolbar";
 import { Editor } from "./components/Editor";
 import { ControlPanel } from "./components/ControlPanel";
+import { DragDivider } from "./components/DragDivider";
 import { ViewErrorBoundary } from "./components/ViewErrorBoundary";
 import { useStore } from "./store/useStore";
 import { VIEWS, getView } from "./viewsRegistry";
@@ -62,7 +63,19 @@ function App() {
     <div className="app">
       <Toolbar />
       <div className="app-body">
-        {showEditor && <Editor />}
+        {showEditor && (
+          <>
+            <Editor />
+            <DragDivider
+              onChange={(x) =>
+                useStore.getState().setEditorWidth(
+                  Math.max(200, Math.min(x, window.innerWidth - 240))
+                )
+              }
+              onReset={() => useStore.getState().setEditorWidth(400)}
+            />
+          </>
+        )}
         <ViewErrorBoundary key={viewMode} viewLabel={view.label}>
           <ViewComponent />
         </ViewErrorBoundary>
