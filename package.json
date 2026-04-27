@@ -5,7 +5,11 @@
   "type": "module",
   "publisher": "halapenyoharry",
   "displayName": "JSON Visual Viewer",
-  "description": "Visualize JSON as interactive tree, force graph, or circle packing",
+  "description": "Visualize JSON as interactive tree, force graph, Cytoscape graph, or circle packing",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/halapenyoharry/json-visual-viewer.git"
+  },
   "categories": [
     "Visualization",
     "Other"
