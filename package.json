@@ -1,7 +1,7 @@
 {
   "name": "json-visual-viewer",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "publisher": "halapenyoharry",
   "displayName": "JSON Visual Viewer",

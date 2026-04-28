@@ -5,6 +5,11 @@ import { openJsonFile, saveCurrentJson, exportCurrentViewAsSvg } from "../utils/
 import { Icon } from "./Icon";
 import "./Toolbar.css";
 
+const FREEZE_SUPPORTED: Record<string, boolean> = {
+  graph: true,
+  graph3d: true,
+};
+
 export function Toolbar() {
   const {
     showEditor,
@@ -14,9 +19,12 @@ export function Toolbar() {
     graphAvailable,
     showControlPanel,
     toggleControlPanel,
+    freezeLayout,
+    toggleFreezeLayout,
   } = useStore();
 
   const currentView = getView(viewMode);
+  const showFreeze = FREEZE_SUPPORTED[viewMode] === true;
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const viewMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -95,6 +103,22 @@ export function Toolbar() {
             </div>
           )}
         </div>
+        {showFreeze && (
+          <>
+            <div className="toolbar-divider" />
+            <button
+              className={`toolbar-btn ${freezeLayout ? "active" : ""}`}
+              onClick={toggleFreezeLayout}
+              title={
+                freezeLayout
+                  ? "Resume simulation (Explore mode off)"
+                  : "Freeze layout for inspection (Explore mode)"
+              }
+            >
+              {freezeLayout ? "❄ Frozen" : "Freeze"}
+            </button>
+          </>
+        )}
         <div className="toolbar-divider" />
         <button
           className={`toolbar-btn ${showControlPanel ? "active" : ""}`}

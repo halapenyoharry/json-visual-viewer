@@ -28,30 +28,27 @@ server. Escape hatch, not the default.
 
 ## Soon
 
-### SVG snapshot + explore mode (the third thing)
+### Freeze mode v2 — true SVG snapshot + Cytoscape support
 
-**Idea**: at scale, the per-frame layout/render loop is the expensive part.
-Once a graph is laid out, capture the result as SVG and let the browser's
-native vector zoom/pan take over (GPU-accelerated, single repaint per frame).
-You give up real-time interactivity — drag, hover effects, dynamic labels —
-but you gain effectively-free zoom and pan at any node count.
+v0.1.2 ships a "Freeze" toggle that pins nodes in place and halts the
+simulation for D3 ForceGraph + 3D Graph. Visually it's the explore experience
+we wanted, but it doesn't yet capture the snapshot to a static SVG that can
+zoom/pan at GPU speed independent of node count.
 
-**When it makes sense**: read-only inspection of large networks where the user
-just wants to see the shape. Pair with the live view: "Explore" toggle freezes
-the layout, snapshots to SVG, and lets you pan the static image.
-
-**Plan sketch**:
-1. Add `Explore` toggle to graph-family views (D3, Cytoscape, eventually 3D)
-2. On enable: stop simulation, serialize current SVG (or rasterize WebGL canvas)
-3. Mount an `<svg>` viewer with d3.zoom — minimal interactivity, infinite scale
-4. On disable: restore live view, resume simulation if applicable
-5. Bonus: this is also our SVG export path (already wired for one-shot export
-   via Cmd+Shift+P) — Explore mode is just "export and keep showing the export"
-
-**Risk**: Cytoscape's SVG export is via a plugin (`cytoscape-svg`). 3D-force
-doesn't have an SVG path — would need a 2D-fallback for snapshot mode. Maybe
-Explore only applies to inherently-SVG views (D3 ForceGraph, Tree, Circles)
-and 3D gets a different freeze-frame strategy (PNG raster).
+Next iterations:
+1. **Cytoscape**: Hook `Freeze` to call `cy.stop()` on the running layout and
+   disable user-drag. Cytoscape layouts already cool down naturally, so this
+   is mostly UX consistency.
+2. **True SVG snapshot for D3 ForceGraph**: when frozen, replace the live SVG
+   with a serialized clone in a separate `<svg>` mounted with d3.zoom. The
+   browser only repaints on transform change → effectively-free zoom/pan at
+   10k+ nodes.
+3. **3D PNG raster snapshot**: 3D-force has no SVG path. When frozen, capture
+   the current WebGL canvas as PNG and render that with d3.zoom for the
+   snapshot view. Lose camera rotation in snapshot mode (deliberate trade-off).
+4. **Reuse SVG export**: the existing one-shot SVG export (`Cmd+Shift+P`) is
+   the same code path — Freeze mode is just "export and keep showing the
+   export." DRY this up when implementing #2.
 
 ### Sigma.js / PixiJS 2D as alternative to Cytoscape
 
@@ -84,3 +81,4 @@ the original D3 view.
 - v0.1.0: Marketplace metadata (repository field)
 - v0.1.1: Cytoscape perf flags (hideEdgesOnViewport, textureOnViewport, motionBlur, pixelRatio:1)
 - v0.1.1: 3D Graph view (`react-force-graph-3d` + `three-spritetext`) with multi-graph fan-out, inline sprite edge labels, 2D/3D toggle, directional particles, curvature slider
+- v0.1.2: Freeze toggle (Explore mode v1) — pins nodes / halts simulation for D3 ForceGraph + 3D Graph; particles auto-pause; toolbar button only shown on graph-family views

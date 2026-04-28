@@ -60,6 +60,7 @@ export function Graph3DView() {
   const particles = useStore((s) => s.graph3dParticles);
   const labelMode = useStore((s) => s.graph3dLabelMode);
   const curvature = useStore((s) => s.graph3dCurvature);
+  const freezeLayout = useStore((s) => s.freezeLayout);
   const { containerRef, size } = useViewSurface();
   const fgRef = useRef<ForceGraphMethods<FGNode, FGLink> | undefined>(undefined);
 
@@ -83,6 +84,29 @@ export function Graph3DView() {
     const t = setTimeout(() => fgRef.current?.zoomToFit(600, 60), 800);
     return () => clearTimeout(t);
   }, [data, perfBlocked]);
+
+  // Freeze: pin every node to its current position so the simulation halts
+  // visually. Camera/orbit controls keep working because the render loop runs.
+  useEffect(() => {
+    if (perfBlocked) return;
+    const nodes = data.nodes as Array<
+      FGNode & { x?: number; y?: number; z?: number; fx?: number; fy?: number; fz?: number }
+    >;
+    if (freezeLayout) {
+      for (const n of nodes) {
+        n.fx = n.x;
+        n.fy = n.y;
+        n.fz = n.z;
+      }
+    } else {
+      for (const n of nodes) {
+        n.fx = undefined;
+        n.fy = undefined;
+        n.fz = undefined;
+      }
+      fgRef.current?.d3ReheatSimulation();
+    }
+  }, [freezeLayout, data, perfBlocked]);
 
   const resetView = () => {
     fgRef.current?.zoomToFit(600, 60);
@@ -132,7 +156,7 @@ export function Graph3DView() {
               linkDirectionalArrowLength={3}
               linkDirectionalArrowRelPos={1}
               linkDirectionalArrowColor={() => "rgba(0, 229, 255, 0.8)"}
-              linkDirectionalParticles={particles ? 2 : 0}
+              linkDirectionalParticles={particles && !freezeLayout ? 2 : 0}
               linkDirectionalParticleWidth={1.5}
               linkDirectionalParticleSpeed={0.006}
               linkDirectionalParticleColor={() => "#00e5ff"}

@@ -15,9 +15,11 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 
 export function ForceGraphView() {
   const graph = useStore((s) => s.detectedGraph);
+  const freezeLayout = useStore((s) => s.freezeLayout);
   const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
+  const simNodesRef = useRef<SimNode[]>([]);
   const resetRef = useRef<() => void>(() => {});
   const nodeCount = graph?.nodes.length ?? 0;
   const [bypassPerf, setBypassPerf] = useState(false);
@@ -50,6 +52,7 @@ export function ForceGraphView() {
     // Clone data so D3 can mutate it
     const nodes: SimNode[] = graph.nodes.map((n) => ({ ...n }));
     const links: SimLink[] = graph.links.map((l) => ({ ...l }));
+    simNodesRef.current = nodes;
 
     // Create SVG
     const svg = d3
@@ -214,10 +217,41 @@ export function ForceGraphView() {
     // Center the view initially after simulation settles a bit
     setTimeout(fitToBounds, 1500);
 
+    // Apply current freeze state immediately if freezing was on at mount
+    if (freezeLayout) {
+      simulation.stop();
+      for (const n of nodes) {
+        n.fx = n.x ?? null;
+        n.fy = n.y ?? null;
+      }
+    }
+
     return () => {
       destroyGraph();
     };
+    // freezeLayout is intentionally omitted: a separate effect handles toggling
+    // without rebuilding the SVG.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, destroyGraph, size, perfBlocked]);
+
+  // Toggle freeze without rebuilding the graph
+  useEffect(() => {
+    const sim = simulationRef.current;
+    if (!sim) return;
+    if (freezeLayout) {
+      sim.stop();
+      for (const n of simNodesRef.current) {
+        n.fx = n.x ?? null;
+        n.fy = n.y ?? null;
+      }
+    } else {
+      for (const n of simNodesRef.current) {
+        n.fx = null;
+        n.fy = null;
+      }
+      sim.alpha(0.3).restart();
+    }
+  }, [freezeLayout]);
 
   if (!graph) {
     return (

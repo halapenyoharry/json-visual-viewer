@@ -89,6 +89,9 @@ interface AppState {
   graph3dLabelMode: Graph3DLabelMode;
   graph3dCurvature: number;
 
+  // Cross-view: freeze layout (Explore mode)
+  freezeLayout: boolean;
+
   // Actions
   setJson: (json: string) => void;
   toggleEditor: () => void;
@@ -109,6 +112,8 @@ interface AppState {
   setGraph3dParticles: (val: boolean) => void;
   setGraph3dLabelMode: (val: Graph3DLabelMode) => void;
   setGraph3dCurvature: (val: number) => void;
+  setFreezeLayout: (val: boolean) => void;
+  toggleFreezeLayout: () => void;
 }
 
 const initialFont = getSavedFont() || "system";
@@ -150,6 +155,7 @@ export const useStore = create<AppState>()(
       graph3dParticles: true,
       graph3dLabelMode: "hover",
       graph3dCurvature: 0.3,
+      freezeLayout: false,
 
       setJson: (json) => {
         const graph = tryDetectGraph(json);
@@ -182,6 +188,8 @@ export const useStore = create<AppState>()(
       setGraph3dParticles: (graph3dParticles) => set({ graph3dParticles }),
       setGraph3dLabelMode: (graph3dLabelMode) => set({ graph3dLabelMode }),
       setGraph3dCurvature: (graph3dCurvature) => set({ graph3dCurvature }),
+      setFreezeLayout: (freezeLayout) => set({ freezeLayout }),
+      toggleFreezeLayout: () => set((s) => ({ freezeLayout: !s.freezeLayout })),
     }),
     {
       name: "jvv-state",
@@ -203,6 +211,7 @@ export const useStore = create<AppState>()(
         graph3dParticles: state.graph3dParticles,
         graph3dLabelMode: state.graph3dLabelMode,
         graph3dCurvature: state.graph3dCurvature,
+        freezeLayout: state.freezeLayout,
       }),
     }
   )
