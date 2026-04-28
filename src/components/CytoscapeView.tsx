@@ -128,6 +128,14 @@ export function CytoscapeView() {
       wheelSensitivity: 0.2,
       minZoom: 0.1,
       maxZoom: 4,
+      // Perf flags: hide expensive layers during pan/zoom, cache to texture,
+      // skip retina supersampling. Big wins at 1k+ nodes.
+      hideEdgesOnViewport: true,
+      hideLabelsOnViewport: true,
+      textureOnViewport: true,
+      motionBlur: true,
+      motionBlurOpacity: 0.2,
+      pixelRatio: 1,
     });
 
     cyRef.current = cy;
