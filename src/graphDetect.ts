@@ -9,12 +9,16 @@
  *   [ { source: "a", target: "b" }, ... ]  (array of edges)
  */
 
+export type GraphNodeKind = "node" | "hyperedge" | "edge-as-node";
+
 export interface GraphNode {
   id: string;
   label: string;
   type?: string;
   size?: number;
   color?: string;
+  kind?: GraphNodeKind;
+  attrs?: Record<string, unknown>;
   data?: Record<string, unknown>;
 }
 
@@ -22,6 +26,10 @@ export interface GraphLink {
   source: string;
   target: string;
   label?: string;
+  directed?: boolean;
+  role?: string;
+  layer?: string;
+  attrs?: Record<string, unknown>;
 }
 
 export interface DetectedGraph {
@@ -76,6 +84,69 @@ function isEdgeLike(obj: Record<string, unknown>): boolean {
   return srcKey !== null && tgtKey !== null;
 }
 
+function extractEdgeLabel(edge: Record<string, unknown>): string | undefined {
+  // Top-level keys (existing behavior).
+  const topKey = Object.keys(edge).find(
+    (k) =>
+      k.toLowerCase() === "label" ||
+      k.toLowerCase() === "relation" ||
+      k.toLowerCase() === "type"
+  );
+  if (topKey && typeof edge[topKey] !== "object") return String(edge[topKey]);
+
+  // Fallbacks inside attrs — predicate chain per i2t correspondence.
+  const attrs = edge.attrs;
+  if (typeof attrs === "object" && attrs !== null) {
+    const a = attrs as Record<string, unknown>;
+    const candidates = [
+      a["i2t:predicate"],
+      a.predicate,
+      a.relation,
+      a.type,
+      a.label,
+    ];
+    for (const c of candidates) {
+      if (typeof c === "string" || typeof c === "number") return String(c);
+    }
+  }
+  return undefined;
+}
+
+function extractKind(node: Record<string, unknown>): GraphNodeKind | undefined {
+  const k = node.kind;
+  if (k === "node" || k === "hyperedge" || k === "edge-as-node") return k;
+  return undefined;
+}
+
+function extractAttrs(obj: Record<string, unknown>): Record<string, unknown> | undefined {
+  const a = obj.attrs;
+  if (typeof a === "object" && a !== null && !Array.isArray(a)) {
+    return a as Record<string, unknown>;
+  }
+  return undefined;
+}
+
+function extractDirected(edge: Record<string, unknown>): boolean | undefined {
+  if (typeof edge.directed === "boolean") return edge.directed;
+  return undefined;
+}
+
+function extractRole(edge: Record<string, unknown>): string | undefined {
+  if (typeof edge.role === "string") return edge.role;
+  return undefined;
+}
+
+function extractLayer(edge: Record<string, unknown>): string | undefined {
+  if (typeof edge.layer === "string") return edge.layer;
+  if (typeof edge.layer === "number") return String(edge.layer);
+  const attrs = edge.attrs;
+  if (typeof attrs === "object" && attrs !== null) {
+    const a = attrs as Record<string, unknown>;
+    if (typeof a.layer === "string") return a.layer;
+  }
+  return undefined;
+}
+
 export function detectGraph(json: unknown): DetectedGraph | null {
   if (typeof json !== "object" || json === null) return null;
 
@@ -89,11 +160,16 @@ export function detectGraph(json: unknown): DetectedGraph | null {
       const rawNodes = obj[nodeKey] as unknown[];
       const rawEdges = obj[edgeKey] as unknown[];
 
-      const nodes: GraphNode[] = rawNodes.map((n, i) => ({
-        id: extractId(n, i),
-        label: extractLabel(n),
-        data: typeof n === "object" && n !== null ? (n as Record<string, unknown>) : undefined,
-      }));
+      const nodes: GraphNode[] = rawNodes.map((n, i) => {
+        const obj = typeof n === "object" && n !== null ? (n as Record<string, unknown>) : null;
+        return {
+          id: extractId(n, i),
+          label: extractLabel(n),
+          kind: obj ? extractKind(obj) : undefined,
+          attrs: obj ? extractAttrs(obj) : undefined,
+          data: obj ?? undefined,
+        };
+      });
 
       const nodeIds = new Set(nodes.map((n) => n.id));
 
@@ -106,13 +182,14 @@ export function detectGraph(json: unknown): DetectedGraph | null {
           if (!srcKey || !tgtKey) return acc;
           const source = String(edge[srcKey]);
           const target = String(edge[tgtKey]);
-          const labelKey = Object.keys(edge).find(
-            (k) => k.toLowerCase() === "label" || k.toLowerCase() === "relation" || k.toLowerCase() === "type"
-          );
           acc.push({
             source,
             target,
-            label: labelKey ? String(edge[labelKey]) : undefined,
+            label: extractEdgeLabel(edge),
+            directed: extractDirected(edge),
+            role: extractRole(edge),
+            layer: extractLayer(edge),
+            attrs: extractAttrs(edge),
           });
           return acc;
         }, []);
@@ -158,13 +235,14 @@ export function detectGraph(json: unknown): DetectedGraph | null {
         nodeIds.add(source);
         nodeIds.add(target);
 
-        const labelKey = Object.keys(edge).find(
-          (k) => k.toLowerCase() === "label" || k.toLowerCase() === "relation" || k.toLowerCase() === "type"
-        );
         links.push({
           source,
           target,
-          label: labelKey ? String(edge[labelKey]) : undefined,
+          label: extractEdgeLabel(edge),
+          directed: extractDirected(edge),
+          role: extractRole(edge),
+          layer: extractLayer(edge),
+          attrs: extractAttrs(edge),
         });
       }
 

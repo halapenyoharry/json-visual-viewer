@@ -322,6 +322,7 @@ export function CirclesView() {
         <PerfWarning
           nodeCount={nodeCount}
           viewLabel="Circles"
+          countLabel="JSON tree entities"
           onBypass={() => setBypassPerf(true)}
         />
       ) : (

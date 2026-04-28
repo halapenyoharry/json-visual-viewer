@@ -10,21 +10,61 @@ import "./Graph3DView.css";
 
 const NODE_THRESHOLD = 5000;
 
+const KIND_COLORS: Record<string, string> = {
+  node: "#00e5ff",
+  hyperedge: "#7a7f99",
+  "edge-as-node": "#b388ff",
+};
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function attrsToHtml(attrs: Record<string, unknown> | undefined, header: string): string {
+  if (!attrs) return escapeHtml(header);
+  const rows = Object.entries(attrs)
+    .filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .slice(0, 12)
+    .map(([k, v]) => {
+      const val = typeof v === "object" ? JSON.stringify(v) : String(v);
+      const truncated = val.length > 80 ? val.slice(0, 77) + "..." : val;
+      return `<div><span style="opacity:0.6">${escapeHtml(k)}</span>: ${escapeHtml(truncated)}</div>`;
+    })
+    .join("");
+  return `<div><strong>${escapeHtml(header)}</strong>${rows}</div>`;
+}
+
 interface FGLink {
   source: string;
   target: string;
   label: string;
   curvature: number;
   rotation: number;
+  directed: boolean;
+  attrs?: Record<string, unknown>;
+  role?: string;
 }
 
 interface FGNode {
   id: string;
   name: string;
+  kind?: "node" | "hyperedge" | "edge-as-node";
+  attrs?: Record<string, unknown>;
 }
 
 function annotateLinks(
-  links: { source: string; target: string; label?: string }[],
+  links: {
+    source: string;
+    target: string;
+    label?: string;
+    directed?: boolean;
+    role?: string;
+    attrs?: Record<string, unknown>;
+  }[],
   baseCurvature: number,
 ): FGLink[] {
   const groups = new Map<string, number[]>();
@@ -48,6 +88,9 @@ function annotateLinks(
         label: link.label ?? "",
         curvature: n === 1 ? 0 : baseCurvature,
         rotation: n === 1 ? 0 : (i / n) * Math.PI * 2,
+        directed: link.directed !== false,
+        role: link.role,
+        attrs: link.attrs,
       };
     });
   }
@@ -74,6 +117,8 @@ export function Graph3DView() {
     const nodes: FGNode[] = graph.nodes.map((n) => ({
       id: n.id,
       name: n.label || n.id,
+      kind: n.kind,
+      attrs: n.attrs,
     }));
     const links = annotateLinks(graph.links, curvature);
     return { nodes, links };
@@ -145,22 +190,27 @@ export function Graph3DView() {
               backgroundColor="#0a0e26"
               showNavInfo={false}
               nodeRelSize={4}
-              nodeColor={() => "#00e5ff"}
+              nodeVal={(n) => (n.kind && n.kind !== "node" ? 0.5 : 1)}
+              nodeColor={(n) => KIND_COLORS[n.kind ?? "node"] ?? "#00e5ff"}
               nodeOpacity={0.9}
-              nodeLabel={tooltipsEnabled ? (n) => n.name : () => ""}
+              nodeLabel={tooltipsEnabled ? (n) => attrsToHtml(n.attrs, n.name) : () => ""}
               linkColor={() => "rgba(0, 229, 255, 0.45)"}
               linkOpacity={0.6}
               linkWidth={0.6}
               linkCurvature={(l) => l.curvature}
               linkCurveRotation={(l) => l.rotation}
-              linkDirectionalArrowLength={3}
+              linkDirectionalArrowLength={(l) => (l.directed ? 3 : 0)}
               linkDirectionalArrowRelPos={1}
               linkDirectionalArrowColor={() => "rgba(0, 229, 255, 0.8)"}
               linkDirectionalParticles={particles && !freezeLayout ? 2 : 0}
               linkDirectionalParticleWidth={1.5}
               linkDirectionalParticleSpeed={0.006}
               linkDirectionalParticleColor={() => "#00e5ff"}
-              linkLabel={tooltipsEnabled ? (l) => l.label : () => ""}
+              linkLabel={
+                tooltipsEnabled
+                  ? (l) => attrsToHtml(l.attrs, l.role ? `${l.label} (${l.role})` : l.label)
+                  : () => ""
+              }
               linkThreeObjectExtend={showInlineLabels}
               linkThreeObject={
                 showInlineLabels

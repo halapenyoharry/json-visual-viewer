@@ -389,6 +389,7 @@ export function MassCirclesView() {
         <PerfWarning
           nodeCount={nodeCount}
           viewLabel="Mass"
+          countLabel="JSON tree entities"
           onBypass={() => setBypassPerf(true)}
         />
       ) : (

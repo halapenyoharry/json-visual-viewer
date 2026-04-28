@@ -189,6 +189,7 @@ export function TreeView() {
         <PerfWarning
           nodeCount={nodeCount}
           viewLabel="Tree"
+          countLabel="JSON tree entities"
           onBypass={() => setBypassPerf(true)}
         />
       ) : (

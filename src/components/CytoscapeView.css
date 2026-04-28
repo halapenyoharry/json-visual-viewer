@@ -5,3 +5,32 @@
   overflow: hidden;
   background: var(--midnight-alaska);
 }
+
+.cytoscape-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(10, 14, 38, 0.92);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #7ddff5;
+  max-width: 320px;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.cytoscape-tooltip strong {
+  color: #00e5ff;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cytoscape-tooltip-row {
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.cytoscape-tooltip-key {
+  opacity: 0.6;
+}

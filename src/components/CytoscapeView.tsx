@@ -12,6 +12,25 @@ cytoscape.use(fcose);
 
 const NODE_THRESHOLD = 1500;
 
+interface TooltipState {
+  x: number;
+  y: number;
+  header: string;
+  attrs?: Record<string, unknown>;
+}
+
+function formatAttrs(attrs: Record<string, unknown> | undefined): [string, string][] {
+  if (!attrs) return [];
+  return Object.entries(attrs)
+    .filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .slice(0, 12)
+    .map(([k, v]) => {
+      const val = typeof v === "object" ? JSON.stringify(v) : String(v);
+      const truncated = val.length > 80 ? val.slice(0, 77) + "..." : val;
+      return [k, truncated];
+    });
+}
+
 function buildLayout(name: CytoscapeLayout): LayoutOptions {
   switch (name) {
     case "fcose":
@@ -45,6 +64,7 @@ export function CytoscapeView() {
   const curveEdges = useStore((s) => s.cytoscapeCurveEdges);
   const { containerRef, size } = useViewSurface();
   const cyRef = useRef<Core | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const nodeCount = graph?.nodes.length ?? 0;
   const [bypassPerf, setBypassPerf] = useState(false);
   useEffect(() => setBypassPerf(false), [nodeCount]);
@@ -57,7 +77,13 @@ export function CytoscapeView() {
 
     const elements: ElementDefinition[] = [
       ...graph.nodes.map((n) => ({
-        data: { id: n.id, label: n.label || n.id },
+        data: {
+          id: n.id,
+          label: n.label || n.id,
+          kind: n.kind ?? "node",
+          attrs: n.attrs,
+        },
+        classes: n.kind && n.kind !== "node" ? `kind-${n.kind}` : undefined,
       })),
       ...graph.links.map((l, i) => ({
         data: {
@@ -65,7 +91,11 @@ export function CytoscapeView() {
           source: l.source,
           target: l.target,
           label: l.label || "",
+          directed: l.directed !== false,
+          role: l.role ?? "",
+          attrs: l.attrs,
         },
+        classes: l.directed === false ? "undirected" : undefined,
       })),
     ];
 
@@ -99,6 +129,28 @@ export function CytoscapeView() {
           },
         },
         {
+          selector: "node.kind-hyperedge",
+          style: {
+            "background-color": "#1a1d33",
+            "border-color": "rgba(122, 127, 153, 0.7)",
+            "border-style": "dashed",
+            shape: "diamond",
+            width: 18,
+            height: 18,
+            color: "rgba(125, 223, 245, 0.6)",
+          },
+        },
+        {
+          selector: "node.kind-edge-as-node",
+          style: {
+            "background-color": "#1a1233",
+            "border-color": "rgba(179, 136, 255, 0.7)",
+            shape: "diamond",
+            width: 22,
+            height: 22,
+          },
+        },
+        {
           selector: "edge",
           style: {
             width: 1.5,
@@ -113,6 +165,12 @@ export function CytoscapeView() {
             "text-background-color": "#0a0e26",
             "text-background-opacity": 0.8,
             "text-background-padding": "2px",
+          },
+        },
+        {
+          selector: "edge.undirected",
+          style: {
+            "target-arrow-shape": "none",
           },
         },
         {
@@ -139,6 +197,44 @@ export function CytoscapeView() {
     });
 
     cyRef.current = cy;
+
+    cy.on("mouseover", "node, edge", (evt) => {
+      const ele = evt.target;
+      const attrs = ele.data("attrs") as Record<string, unknown> | undefined;
+      const label = (ele.data("label") as string) || "";
+      const role = (ele.data("role") as string) || "";
+      const isEdge = ele.isEdge();
+      const renderedPos = isEdge
+        ? ele.midpoint()
+        : ele.renderedPosition();
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      const containerLeft = containerRect?.left ?? 0;
+      const containerTop = containerRect?.top ?? 0;
+      const pan = cy.pan();
+      const zoom = cy.zoom();
+      const screenX = isEdge
+        ? renderedPos.x * zoom + pan.x
+        : renderedPos.x;
+      const screenY = isEdge
+        ? renderedPos.y * zoom + pan.y
+        : renderedPos.y;
+      setTooltip({
+        x: screenX + 12,
+        y: screenY + 12,
+        header: role ? `${label} (${role})` : label,
+        attrs,
+      });
+      void containerLeft;
+      void containerTop;
+    });
+
+    cy.on("mouseout", "node, edge", () => {
+      setTooltip(null);
+    });
+
+    cy.on("pan zoom drag", () => {
+      setTooltip(null);
+    });
 
     return () => {
       cy.destroy();
@@ -169,13 +265,28 @@ export function CytoscapeView() {
           onBypass={() => setBypassPerf(true)}
         />
       ) : (
-        <button
-          className="view-reset-btn"
-          onClick={resetView}
-          title="Reset view"
-        >
-          ⤢
-        </button>
+        <>
+          <button
+            className="view-reset-btn"
+            onClick={resetView}
+            title="Reset view"
+          >
+            ⤢
+          </button>
+          {tooltip && (
+            <div
+              className="cytoscape-tooltip"
+              style={{ left: tooltip.x, top: tooltip.y }}
+            >
+              <strong>{tooltip.header}</strong>
+              {formatAttrs(tooltip.attrs).map(([k, v]) => (
+                <div key={k} className="cytoscape-tooltip-row">
+                  <span className="cytoscape-tooltip-key">{k}</span>: {v}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

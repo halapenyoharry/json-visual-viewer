@@ -11,6 +11,7 @@ const GRAPH_NODE_THRESHOLD = 500;
 interface SimNode extends GraphNode, d3.SimulationNodeDatum {}
 interface SimLink extends d3.SimulationLinkDatum<SimNode> {
   label?: string;
+  directed?: boolean;
 }
 
 export function ForceGraphView() {
@@ -145,7 +146,11 @@ export function ForceGraphView() {
       .enter()
       .append("line")
       .attr("class", "graph-link")
-      .attr("marker-end", "url(#arrowhead)");
+      .attr("marker-end", (d) =>
+        (d as SimLink & { directed?: boolean }).directed === false
+          ? null
+          : "url(#arrowhead)"
+      );
 
     // Link labels
     const linkLabel = g
