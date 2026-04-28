@@ -39,3 +39,12 @@ accessible-fonts.zip
 # Local archive / personal metadata
 _archive/
 .project-bible.json
+
+# Loose JSON in repo root — drop in /examples/ if you want to share
+/*.json
+!/package.json
+!/package-lock.json
+!/tsconfig.json
+!/tsconfig.app.json
+!/tsconfig.node.json
+!/tsconfig.vscode.json
