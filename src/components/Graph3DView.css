@@ -1,0 +1,23 @@
+.graph3d-panel {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #0a0e26;
+  overflow: hidden;
+}
+
+.graph3d-panel canvas {
+  display: block;
+}
+
+.graph3d-panel .scene-tooltip {
+  font-family: inherit;
+  font-size: 11px;
+  color: #7ddff5;
+  background: rgba(10, 14, 38, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  padding: 4px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}

@@ -4,65 +4,27 @@ Living roadmap. Add items at the bottom of the relevant section. Move to "Done" 
 
 ## Now (next session)
 
-### 3D Graph View — multi-graph + WebGL
+### Verify 3D Graph at scale
 
-**Why now**: Cytoscape's canvas renderer is choking at 3k+ nodes. WebGL is the
-real fix; 3D is a bonus that solves multi-graph readability for free (parallel
-edges fan out in Z instead of overlapping in 2D).
+Shipped in v0.1.1: `react-force-graph-3d` + `three-spritetext`, multi-graph
+fan-out via `linkCurvature` + `linkCurveRotation`, inline sprite edge labels,
+2D/3D toggle, directional particle flow, curvature slider. Acceptance still
+needs a real-world check:
+- 3000-node graph at 30+ fps (rotate, zoom, drag)
+- Parallel edges visibly distinct around the source-target axis
+- Inline labels readable without overlap chaos
+- 2D mode parity vs Cytoscape on 1k+ nodes
 
-**Library**: `react-force-graph-3d` (vasturiano). MIT, Three.js based, used by
-Observable / GitHub network views. The same author publishes
-`react-force-graph-2d` (PixiJS WebGL) — could double as a "Sigma-tier" 2D view
-for users who want flat WebGL.
+If perf falls short, profile cooldown ticks, particle count, and sprite count
+first — those are the usual suspects. `NODE_THRESHOLD` is currently 5000;
+adjust once we have data.
 
-Why this over Sigma.js:
-- Edge labels along arrow inline (the look you liked) is built-in via
-  `linkLabel` + `linkDirectionalParticles` + `linkThreeObjectExtend`.
-- Multi-graph: `linkCurvature` + `linkCurveRotation` auto-fan parallel edges
-  around the source-target axis. No manual offset math.
-- Scales to 10k+ nodes per their benchmarks; we can verify before committing.
-- React-native API, drops into the existing view contract cleanly.
+### Open question — Chrome / browser fallback
 
-Why not Cosmograph: license complications (commercial restriction), CSV-first,
-overkill at 3-10k nodes.
-
-**Plan**:
-1. `npm i react-force-graph-3d three` — three is a peer dep
-2. Add `'graph3d'` to `ViewMode` union; persist 3D-specific settings in store
-   (mode: '2d' | '3d', particle speed, link curvature, label visibility)
-3. New `Graph3DView.tsx`:
-   - Use `useViewSurface` for sizing (just like other views)
-   - Adapter: `DetectedGraph` → `{ nodes: [{id, name}], links: [{source, target, label}] }`
-     — same shape we already produce, basically a rename
-   - Multi-graph fan-out: group links by `(source, target)` pair, set
-     `linkCurvature` per index in group, `linkCurveRotation` distributes around axis
-   - Edge labels: enable `linkThreeObjectExtend: true` + sprite labels along curve
-   - Node labels: HTML overlay or sprite — try sprite first, fallback to overlay if perf
-   - Color theme: keep cyan/midnight palette
-4. New `Graph3DSettings.tsx`:
-   - 2D / 3D toggle
-   - Particle effects on/off (the dotted-line directional flow)
-   - Label visibility (always / on hover / never)
-   - Curvature strength slider (multi-graph fan width)
-5. Register in `viewsRegistry` between Cytoscape and Circles
-6. Decide later: keep D3 ForceGraph + Cytoscape both, or retire D3 ForceGraph
-   once 3D is solid. Cytoscape stays for layout variety (dagre, breadthfirst,
-   concentric — things 3D-force can't do).
-
-**Open question — Chrome fallback**: VS Code webviews allow WebGL but the
-extension-host overhead may still bite at very large scale. Plan B: add a
-`Open in Browser` button that writes the current JSON to a temp file and opens
-`http://localhost:NNNN/?file=…` against a tiny vite preview server. Last-resort
-escape hatch, not the default.
-
-**Acceptance**: 3000-node graph pans/zooms at 30+ fps, parallel edges visibly
-distinct, edge labels readable along the arrow.
-
-### Cytoscape perf flags — DONE in v0.1.1 (next package)
-
-Flipped `hideEdgesOnViewport`, `hideLabelsOnViewport`, `textureOnViewport`,
-`motionBlur`, `pixelRatio: 1`. Should give 2-5x at 1k+ nodes during pan/zoom.
-Bake into the next `vsce package` cycle.
+VS Code webviews allow WebGL but the extension-host overhead may still bite at
+very large scale. Plan B: `Open in Browser` button that writes JSON to a temp
+file and opens `http://localhost:NNNN/?file=…` against a tiny vite preview
+server. Escape hatch, not the default.
 
 ## Soon
 
@@ -120,4 +82,5 @@ the original D3 view.
 - v0.1.0: Toolbar view dropdown (collapsed N buttons → single menu)
 - v0.1.0: Multi-edge support in data layer (curve toggle in Cytoscape)
 - v0.1.0: Marketplace metadata (repository field)
-- v0.1.1 (pending package): Cytoscape perf flags
+- v0.1.1: Cytoscape perf flags (hideEdgesOnViewport, textureOnViewport, motionBlur, pixelRatio:1)
+- v0.1.1: 3D Graph view (`react-force-graph-3d` + `three-spritetext`) with multi-graph fan-out, inline sprite edge labels, 2D/3D toggle, directional particles, curvature slider

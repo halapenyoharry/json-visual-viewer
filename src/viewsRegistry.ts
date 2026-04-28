@@ -10,6 +10,8 @@ import { ForceGraphView } from "./components/ForceGraphView";
 import { GraphSettings } from "./components/GraphSettings";
 import { CytoscapeView } from "./components/CytoscapeView";
 import { CytoscapeSettings } from "./components/CytoscapeSettings";
+import { Graph3DView } from "./components/Graph3DView";
+import { Graph3DSettings } from "./components/Graph3DSettings";
 
 /**
  * VIEWS REGISTRY
@@ -96,6 +98,15 @@ export const VIEWS: ViewDefinition[] = [
     hint: "Drag nodes · Scroll to zoom · Multi-edges curve",
     view: CytoscapeView,
     settings: CytoscapeSettings,
+    requiresGraph: true,
+  },
+  {
+    id: "graph3d",
+    label: "3D Graph",
+    titleTip: "3D force graph (WebGL · multi-graph fan-out · edge labels)",
+    hint: "Drag to rotate · Scroll to zoom · Right-drag to pan",
+    view: Graph3DView,
+    settings: Graph3DSettings,
     requiresGraph: true,
   },
   {

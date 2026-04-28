@@ -46,7 +46,7 @@ const SAMPLE_JSON = {
   }
 };
 
-export type ViewMode = "tree" | "graph" | "cytoscape" | "circles" | "mass";
+export type ViewMode = "tree" | "graph" | "cytoscape" | "graph3d" | "circles" | "mass";
 export type CytoscapeLayout =
   | "fcose"
   | "cose"
@@ -57,6 +57,8 @@ export type CytoscapeLayout =
   | "random";
 export type TreeLayoutType = "cluster" | "tidy";
 export type TreeDirection = "LR" | "RL" | "TB" | "BT";
+export type Graph3DDimensions = 2 | 3;
+export type Graph3DLabelMode = "always" | "hover" | "never";
 
 interface AppState {
   json: string;
@@ -81,6 +83,12 @@ interface AppState {
   cytoscapeLayout: CytoscapeLayout;
   cytoscapeCurveEdges: boolean;
 
+  // 3D Graph Settings
+  graph3dDimensions: Graph3DDimensions;
+  graph3dParticles: boolean;
+  graph3dLabelMode: Graph3DLabelMode;
+  graph3dCurvature: number;
+
   // Actions
   setJson: (json: string) => void;
   toggleEditor: () => void;
@@ -97,6 +105,10 @@ interface AppState {
   setShowArrayIndices: (val: boolean) => void;
   setCytoscapeLayout: (val: CytoscapeLayout) => void;
   setCytoscapeCurveEdges: (val: boolean) => void;
+  setGraph3dDimensions: (val: Graph3DDimensions) => void;
+  setGraph3dParticles: (val: boolean) => void;
+  setGraph3dLabelMode: (val: Graph3DLabelMode) => void;
+  setGraph3dCurvature: (val: number) => void;
 }
 
 const initialFont = getSavedFont() || "system";
@@ -134,6 +146,10 @@ export const useStore = create<AppState>()(
       showArrayIndices: true,
       cytoscapeLayout: "fcose",
       cytoscapeCurveEdges: true,
+      graph3dDimensions: 3,
+      graph3dParticles: true,
+      graph3dLabelMode: "hover",
+      graph3dCurvature: 0.3,
 
       setJson: (json) => {
         const graph = tryDetectGraph(json);
@@ -162,6 +178,10 @@ export const useStore = create<AppState>()(
       setShowArrayIndices: (showArrayIndices) => set({ showArrayIndices }),
       setCytoscapeLayout: (cytoscapeLayout) => set({ cytoscapeLayout }),
       setCytoscapeCurveEdges: (cytoscapeCurveEdges) => set({ cytoscapeCurveEdges }),
+      setGraph3dDimensions: (graph3dDimensions) => set({ graph3dDimensions }),
+      setGraph3dParticles: (graph3dParticles) => set({ graph3dParticles }),
+      setGraph3dLabelMode: (graph3dLabelMode) => set({ graph3dLabelMode }),
+      setGraph3dCurvature: (graph3dCurvature) => set({ graph3dCurvature }),
     }),
     {
       name: "jvv-state",
@@ -179,6 +199,10 @@ export const useStore = create<AppState>()(
         treeColors: state.treeColors,
         cytoscapeLayout: state.cytoscapeLayout,
         cytoscapeCurveEdges: state.cytoscapeCurveEdges,
+        graph3dDimensions: state.graph3dDimensions,
+        graph3dParticles: state.graph3dParticles,
+        graph3dLabelMode: state.graph3dLabelMode,
+        graph3dCurvature: state.graph3dCurvature,
       }),
     }
   )

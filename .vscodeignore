@@ -41,4 +41,7 @@ dist-extension/extension.js.map
 # Sample/demo data we don't need shipped (the user can drop in their own JSON)
 dist-webview/projects-mass.json
 
+# Internal roadmap — not for consumers
+NEXT_STEPS.md
+
 # The extension only needs dist-extension/ and dist-webview/
