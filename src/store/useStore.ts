@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { getSavedFont, saveFont, applyFont } from "../fonts";
 import { detectGraph } from "../graphDetect";
 import type { DetectedGraph } from "../graphDetect";
+import { buildLayerVisibility } from "../utils/layers";
 
 const SAMPLE_JSON = {
   _metadata: {
@@ -92,6 +93,10 @@ interface AppState {
   // Cross-view: freeze layout (Explore mode)
   freezeLayout: boolean;
 
+  // Layers (in-data layer toggle, v0.1.4)
+  showLayerPanel: boolean;
+  layerVisibility: Record<string, boolean>;
+
   // Actions
   setJson: (json: string) => void;
   toggleEditor: () => void;
@@ -114,6 +119,9 @@ interface AppState {
   setGraph3dCurvature: (val: number) => void;
   setFreezeLayout: (val: boolean) => void;
   toggleFreezeLayout: () => void;
+  toggleLayerPanel: () => void;
+  setLayerVisibility: (layer: string, on: boolean) => void;
+  setAllLayers: (on: boolean) => void;
 }
 
 const initialFont = getSavedFont() || "system";
@@ -156,14 +164,17 @@ export const useStore = create<AppState>()(
       graph3dLabelMode: "hover",
       graph3dCurvature: 0.3,
       freezeLayout: false,
+      showLayerPanel: false,
+      layerVisibility: buildLayerVisibility(initialGraph, {}),
 
       setJson: (json) => {
         const graph = tryDetectGraph(json);
-        set({
+        set((s) => ({
           json,
           detectedGraph: graph,
           graphAvailable: graph !== null,
-        });
+          layerVisibility: buildLayerVisibility(graph, s.layerVisibility),
+        }));
       },
 
       toggleEditor: () => set((s) => ({ showEditor: !s.showEditor })),
@@ -190,6 +201,17 @@ export const useStore = create<AppState>()(
       setGraph3dCurvature: (graph3dCurvature) => set({ graph3dCurvature }),
       setFreezeLayout: (freezeLayout) => set({ freezeLayout }),
       toggleFreezeLayout: () => set((s) => ({ freezeLayout: !s.freezeLayout })),
+      toggleLayerPanel: () => set((s) => ({ showLayerPanel: !s.showLayerPanel })),
+      setLayerVisibility: (layer, on) =>
+        set((s) => ({
+          layerVisibility: { ...s.layerVisibility, [layer]: on },
+        })),
+      setAllLayers: (on) =>
+        set((s) => {
+          const next: Record<string, boolean> = {};
+          for (const k of Object.keys(s.layerVisibility)) next[k] = on;
+          return { layerVisibility: next };
+        }),
     }),
     {
       name: "jvv-state",
@@ -212,6 +234,7 @@ export const useStore = create<AppState>()(
         graph3dLabelMode: state.graph3dLabelMode,
         graph3dCurvature: state.graph3dCurvature,
         freezeLayout: state.freezeLayout,
+        showLayerPanel: state.showLayerPanel,
       }),
     }
   )

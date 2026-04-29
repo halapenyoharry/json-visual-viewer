@@ -10,6 +10,12 @@ const FREEZE_SUPPORTED: Record<string, boolean> = {
   graph3d: true,
 };
 
+const LAYERS_SUPPORTED: Record<string, boolean> = {
+  graph: true,
+  graph3d: true,
+  cytoscape: true,
+};
+
 export function Toolbar() {
   const {
     showEditor,
@@ -21,10 +27,13 @@ export function Toolbar() {
     toggleControlPanel,
     freezeLayout,
     toggleFreezeLayout,
+    showLayerPanel,
+    toggleLayerPanel,
   } = useStore();
 
   const currentView = getView(viewMode);
   const showFreeze = FREEZE_SUPPORTED[viewMode] === true;
+  const showLayersBtn = LAYERS_SUPPORTED[viewMode] === true && graphAvailable;
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const viewMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -116,6 +125,18 @@ export function Toolbar() {
               }
             >
               {freezeLayout ? "❄ Frozen" : "Freeze"}
+            </button>
+          </>
+        )}
+        {showLayersBtn && (
+          <>
+            <div className="toolbar-divider" />
+            <button
+              className={`toolbar-btn ${showLayerPanel ? "active" : ""}`}
+              onClick={toggleLayerPanel}
+              title="Toggle layer panel (filter and color edges by layer)"
+            >
+              Layers
             </button>
           </>
         )}

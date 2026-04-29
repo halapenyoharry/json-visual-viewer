@@ -4,17 +4,28 @@ import { Editor } from "./components/Editor";
 import { ControlPanel } from "./components/ControlPanel";
 import { DragDivider } from "./components/DragDivider";
 import { ViewErrorBoundary } from "./components/ViewErrorBoundary";
+import { LayerPanel } from "./components/LayerPanel";
 import { useStore } from "./store/useStore";
 import { VIEWS, getView } from "./viewsRegistry";
 import { openJsonFile, saveCurrentJson, exportCurrentViewAsSvg } from "./utils/fileIO";
 import "./App.css";
 
+const LAYERS_SUPPORTED: Record<string, boolean> = {
+  graph: true,
+  graph3d: true,
+  cytoscape: true,
+};
+
 function App() {
   const showEditor = useStore((s) => s.showEditor);
   const viewMode = useStore((s) => s.viewMode);
   const showControlPanel = useStore((s) => s.showControlPanel);
+  const showLayerPanel = useStore((s) => s.showLayerPanel);
+  const graphAvailable = useStore((s) => s.graphAvailable);
   const view = getView(viewMode);
   const ViewComponent = view.view;
+  const showLayers =
+    showLayerPanel && LAYERS_SUPPORTED[viewMode] === true && graphAvailable;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -76,9 +87,12 @@ function App() {
             />
           </>
         )}
-        <ViewErrorBoundary key={viewMode} viewLabel={view.label}>
-          <ViewComponent />
-        </ViewErrorBoundary>
+        <div className="view-stack">
+          <ViewErrorBoundary key={viewMode} viewLabel={view.label}>
+            <ViewComponent />
+          </ViewErrorBoundary>
+          {showLayers && <LayerPanel />}
+        </div>
         {showControlPanel && <ControlPanel />}
       </div>
     </div>

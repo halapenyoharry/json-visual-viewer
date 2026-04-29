@@ -6,6 +6,7 @@ import type { Object3D } from "three";
 import { useStore } from "../store/useStore";
 import { useViewSurface } from "./useViewSurface";
 import { PerfWarning } from "./PerfWarning";
+import { colorForLayer } from "../utils/layers";
 import "./Graph3DView.css";
 
 const NODE_THRESHOLD = 5000;
@@ -47,6 +48,7 @@ interface FGLink {
   directed: boolean;
   attrs?: Record<string, unknown>;
   role?: string;
+  layer?: string;
 }
 
 interface FGNode {
@@ -63,6 +65,7 @@ function annotateLinks(
     label?: string;
     directed?: boolean;
     role?: string;
+    layer?: string;
     attrs?: Record<string, unknown>;
   }[],
   baseCurvature: number,
@@ -90,6 +93,7 @@ function annotateLinks(
         rotation: n === 1 ? 0 : (i / n) * Math.PI * 2,
         directed: link.directed !== false,
         role: link.role,
+        layer: link.layer,
         attrs: link.attrs,
       };
     });
@@ -104,6 +108,7 @@ export function Graph3DView() {
   const labelMode = useStore((s) => s.graph3dLabelMode);
   const curvature = useStore((s) => s.graph3dCurvature);
   const freezeLayout = useStore((s) => s.freezeLayout);
+  const layerVisibility = useStore((s) => s.layerVisibility);
   const { containerRef, size } = useViewSurface();
   const fgRef = useRef<ForceGraphMethods<FGNode, FGLink> | undefined>(undefined);
 
@@ -194,18 +199,29 @@ export function Graph3DView() {
               nodeColor={(n) => KIND_COLORS[n.kind ?? "node"] ?? "#00e5ff"}
               nodeOpacity={0.9}
               nodeLabel={tooltipsEnabled ? (n) => attrsToHtml(n.attrs, n.name) : () => ""}
-              linkColor={() => "rgba(0, 229, 255, 0.45)"}
+              linkColor={(l) =>
+                l.layer ? colorForLayer(l.layer) : "rgba(0, 229, 255, 0.45)"
+              }
               linkOpacity={0.6}
               linkWidth={0.6}
+              linkVisibility={(l) =>
+                !l.layer || layerVisibility[l.layer] !== false
+              }
               linkCurvature={(l) => l.curvature}
               linkCurveRotation={(l) => l.rotation}
               linkDirectionalArrowLength={(l) => (l.directed ? 3 : 0)}
               linkDirectionalArrowRelPos={1}
-              linkDirectionalArrowColor={() => "rgba(0, 229, 255, 0.8)"}
-              linkDirectionalParticles={particles && !freezeLayout ? 2 : 0}
+              linkDirectionalArrowColor={(l) =>
+                l.layer ? colorForLayer(l.layer) : "rgba(0, 229, 255, 0.8)"
+              }
+              linkDirectionalParticles={(l) =>
+                particles && !freezeLayout && (!l.layer || layerVisibility[l.layer] !== false) ? 2 : 0
+              }
               linkDirectionalParticleWidth={1.5}
               linkDirectionalParticleSpeed={0.006}
-              linkDirectionalParticleColor={() => "#00e5ff"}
+              linkDirectionalParticleColor={(l) =>
+                l.layer ? colorForLayer(l.layer) : "#00e5ff"
+              }
               linkLabel={
                 tooltipsEnabled
                   ? (l) => attrsToHtml(l.attrs, l.role ? `${l.label} (${l.role})` : l.label)

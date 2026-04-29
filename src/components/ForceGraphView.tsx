@@ -4,6 +4,7 @@ import type { GraphNode } from "../graphDetect";
 import { useStore } from "../store/useStore";
 import { useViewSurface } from "./useViewSurface";
 import { PerfWarning } from "./PerfWarning";
+import { colorForLayer } from "../utils/layers";
 import "./ForceGraphView.css";
 
 const GRAPH_NODE_THRESHOLD = 500;
@@ -12,15 +13,19 @@ interface SimNode extends GraphNode, d3.SimulationNodeDatum {}
 interface SimLink extends d3.SimulationLinkDatum<SimNode> {
   label?: string;
   directed?: boolean;
+  layer?: string;
 }
 
 export function ForceGraphView() {
   const graph = useStore((s) => s.detectedGraph);
   const freezeLayout = useStore((s) => s.freezeLayout);
+  const layerVisibility = useStore((s) => s.layerVisibility);
   const { containerRef, size } = useViewSurface();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
   const simNodesRef = useRef<SimNode[]>([]);
+  const linkSelectionRef = useRef<d3.Selection<SVGLineElement, SimLink, SVGGElement, unknown> | null>(null);
+  const linkLabelSelectionRef = useRef<d3.Selection<SVGTextElement, SimLink, SVGGElement, unknown> | null>(null);
   const resetRef = useRef<() => void>(() => {});
   const nodeCount = graph?.nodes.length ?? 0;
   const [bypassPerf, setBypassPerf] = useState(false);
@@ -150,7 +155,12 @@ export function ForceGraphView() {
         (d as SimLink & { directed?: boolean }).directed === false
           ? null
           : "url(#arrowhead)"
+      )
+      .attr("stroke", (d) => (d.layer ? colorForLayer(d.layer) : ""))
+      .style("display", (d) =>
+        d.layer && layerVisibility[d.layer] === false ? "none" : null
       );
+    linkSelectionRef.current = link;
 
     // Link labels
     const linkLabel = g
@@ -159,7 +169,11 @@ export function ForceGraphView() {
       .enter()
       .append("text")
       .attr("class", "graph-link-label")
-      .text((d) => d.label || "");
+      .text((d) => d.label || "")
+      .style("display", (d) =>
+        d.layer && layerVisibility[d.layer] === false ? "none" : null
+      );
+    linkLabelSelectionRef.current = linkLabel;
 
     // Nodes
     const node = g
@@ -257,6 +271,15 @@ export function ForceGraphView() {
       sim.alpha(0.3).restart();
     }
   }, [freezeLayout]);
+
+  // Apply layer visibility to existing link/label selections without rebuild.
+  useEffect(() => {
+    const link = linkSelectionRef.current;
+    const label = linkLabelSelectionRef.current;
+    const visible = (l: SimLink) => !l.layer || layerVisibility[l.layer] !== false;
+    if (link) link.style("display", (d) => (visible(d) ? null : "none"));
+    if (label) label.style("display", (d) => (visible(d) ? null : "none"));
+  }, [layerVisibility]);
 
   if (!graph) {
     return (

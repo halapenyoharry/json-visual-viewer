@@ -6,6 +6,7 @@ import { useStore } from "../store/useStore";
 import type { CytoscapeLayout } from "../store/useStore";
 import { useViewSurface } from "./useViewSurface";
 import { PerfWarning } from "./PerfWarning";
+import { colorForLayer } from "../utils/layers";
 import "./CytoscapeView.css";
 
 cytoscape.use(fcose);
@@ -62,6 +63,7 @@ export function CytoscapeView() {
   const graph = useStore((s) => s.detectedGraph);
   const layout = useStore((s) => s.cytoscapeLayout);
   const curveEdges = useStore((s) => s.cytoscapeCurveEdges);
+  const layerVisibility = useStore((s) => s.layerVisibility);
   const { containerRef, size } = useViewSurface();
   const cyRef = useRef<Core | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
@@ -93,9 +95,16 @@ export function CytoscapeView() {
           label: l.label || "",
           directed: l.directed !== false,
           role: l.role ?? "",
+          layer: l.layer ?? "",
+          layerColor: l.layer ? colorForLayer(l.layer) : "",
           attrs: l.attrs,
         },
-        classes: l.directed === false ? "undirected" : undefined,
+        classes: [
+          l.directed === false ? "undirected" : null,
+          l.layer ? "has-layer" : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
       })),
     ];
 
@@ -174,6 +183,20 @@ export function CytoscapeView() {
           },
         },
         {
+          selector: "edge.has-layer",
+          style: {
+            "line-color": "data(layerColor)",
+            "target-arrow-color": "data(layerColor)",
+            color: "data(layerColor)",
+          },
+        },
+        {
+          selector: "edge.layer-hidden",
+          style: {
+            display: "none",
+          },
+        },
+        {
           selector: "edge:selected",
           style: {
             "line-color": "#00e5ff",
@@ -241,6 +264,24 @@ export function CytoscapeView() {
       cyRef.current = null;
     };
   }, [graph, size.width, size.height, layout, curveEdges, perfBlocked, containerRef]);
+
+  // Apply layer visibility without rebuilding the cytoscape instance.
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.batch(() => {
+      cy.edges().forEach((edge) => {
+        const layer = edge.data("layer") as string | undefined;
+        if (!layer) return;
+        const on = layerVisibility[layer] !== false;
+        if (on) {
+          edge.removeClass("layer-hidden");
+        } else {
+          edge.addClass("layer-hidden");
+        }
+      });
+    });
+  }, [layerVisibility]);
 
   const resetView = () => {
     cyRef.current?.fit(undefined, 40);
