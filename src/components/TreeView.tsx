@@ -1,18 +1,26 @@
-import { useEffect, useRef, useMemo, useState } from "react";
-import * as d3 from "d3";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store/useStore";
 import { jsonToHierarchy, countHierarchyNodes } from "../utils/jsonToHierarchy";
-import type { HierarchyNode } from "../utils/jsonToHierarchy";
-import { useViewSurface } from "./useViewSurface";
+import { ModuleHost } from "../host/ModuleHost";
+import type { ModuleData } from "../modules/types";
+import type { TreeParams } from "../modules/tree";
 import { PerfWarning } from "./PerfWarning";
 import "./TreeView.css";
 
 const TREE_NODE_THRESHOLD = 10000;
 
+/**
+ * Thin bridge between the global store and treeModule.
+ *
+ * Step 2 of the modular refactor — the visualization itself lives at
+ * src/modules/tree/. This wrapper stays for now to:
+ *   - read store fields and adapt them to TreeParams
+ *   - host-level perf warning (moves to ModuleHost in step 8)
+ *
+ * Eventually App.tsx will mount <ModuleHost moduleId={viewMode}/> directly
+ * and this wrapper goes away.
+ */
 export function TreeView() {
-  const { containerRef, size } = useViewSurface();
-  const svgRef = useRef<SVGSVGElement | null>(null);
-  const resetRef = useRef<() => void>(() => {});
   const {
     json,
     isExplodedView,
@@ -22,6 +30,11 @@ export function TreeView() {
     treeFontSize,
     treeColors,
     showArrayIndices,
+    setTreeLayout,
+    setTreeDirection,
+    setTreeSpacing,
+    setTreeFontSize,
+    setTreeColors,
   } = useStore();
 
   const rootData = useMemo(() => {
@@ -36,171 +49,73 @@ export function TreeView() {
   const nodeCount = useMemo(() => countHierarchyNodes(rootData), [rootData]);
   const [bypassPerf, setBypassPerf] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBypassPerf(false);
   }, [nodeCount]);
   const perfBlocked = nodeCount > TREE_NODE_THRESHOLD && !bypassPerf;
 
-  useEffect(() => {
-    if (!containerRef.current || !rootData) return;
-    if (size.width === 0 || size.height === 0) return;
-    if (perfBlocked) return;
+  const data: ModuleData = useMemo(() => ({ hierarchy: rootData }), [rootData]);
+  const params: TreeParams = useMemo(
+    () => ({
+      layout: treeLayout,
+      direction: treeDirection,
+      spacingX: treeSpacing.dx,
+      spacingY: treeSpacing.dy,
+      fontSize: treeFontSize,
+      nodeColor: treeColors.node,
+      linkColor: treeColors.link,
+    }),
+    [treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors],
+  );
 
-    if (svgRef.current) {
-      svgRef.current.remove();
-      svgRef.current = null;
+  const handleParamChange = (path: string, value: unknown) => {
+    switch (path) {
+      case "layout":
+        setTreeLayout(value as TreeParams["layout"]);
+        break;
+      case "direction":
+        setTreeDirection(value as TreeParams["direction"]);
+        break;
+      case "spacingX":
+        setTreeSpacing({ ...treeSpacing, dx: value as number });
+        break;
+      case "spacingY":
+        setTreeSpacing({ ...treeSpacing, dy: value as number });
+        break;
+      case "fontSize":
+        setTreeFontSize(value as number);
+        break;
+      case "nodeColor":
+        setTreeColors({ ...treeColors, node: value as string });
+        break;
+      case "linkColor":
+        setTreeColors({ ...treeColors, link: value as string });
+        break;
     }
+  };
 
-    const container = containerRef.current;
-    const { width, height } = size;
-
-    const root = d3.hierarchy<HierarchyNode>(rootData, (d) => d.children);
-
-    const { dx, dy } = treeSpacing;
-    const layoutEngine = treeLayout === "cluster" ? d3.cluster<HierarchyNode>() : d3.tree<HierarchyNode>();
-    layoutEngine.nodeSize([dx, dy])(root);
-
-    let x0 = Infinity;
-    let x1 = -x0;
-    root.each((d) => {
-      if ((d.x ?? 0) > x1) x1 = d.x ?? 0;
-      if ((d.x ?? 0) < x0) x0 = d.x ?? 0;
-    });
-
-    const svg = d3
-      .select(container)
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .style("max-width", "100%")
-      .style("height", "auto")
-      .style("font-family", "sans-serif")
-      .style("font-size", "11px");
-
-    svgRef.current = svg.node();
-
-    const g = svg.append("g");
-
-    // Add zoom/pan
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
-      .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-      });
-    svg.call(zoom);
-
-    // Orientation Multipliers
-    const xMult = treeDirection === "RL" ? -1 : 1;
-    const yMult = treeDirection === "BT" ? -1 : 1;
-    const isVertical = treeDirection === "TB" || treeDirection === "BT";
-
-    g.append("g")
-      .attr("fill", "none")
-      .attr("stroke", treeColors.link)
-      .attr("stroke-opacity", 0.6)
-      .attr("stroke-width", 1.5)
-      .selectAll("path")
-      .data(root.links() as d3.HierarchyPointLink<HierarchyNode>[])
-      .join("path")
-      .attr(
-        "d",
-        isVertical
-          ? d3.linkVertical<d3.HierarchyLink<HierarchyNode>, d3.HierarchyPointNode<HierarchyNode>>()
-              .x((d) => (d.x ?? 0) * xMult)
-              .y((d) => (d.y ?? 0) * yMult)
-          : d3.linkHorizontal<d3.HierarchyLink<HierarchyNode>, d3.HierarchyPointNode<HierarchyNode>>()
-              .x((d) => (d.y ?? 0) * xMult)
-              .y((d) => (d.x ?? 0) * yMult)
-      );
-
-    const node = g
-      .append("g")
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-width", 3)
-      .selectAll("g")
-      .data(root.descendants() as d3.HierarchyPointNode<HierarchyNode>[])
-      .join("g")
-      .attr(
-        "transform",
-        (d) =>
-          `translate(${isVertical ? (d.x ?? 0) * xMult : (d.y ?? 0) * xMult},${
-            isVertical ? (d.y ?? 0) * yMult : (d.x ?? 0) * yMult
-          })`
-      );
-
-    // Draggable behavior
-    const drag = d3.drag<SVGGElement, d3.HierarchyPointNode<HierarchyNode>>()
-      .on("drag", function (event) {
-        // Only update visually to prevent full re-renders
-        const selection = d3.select(this);
-        const transform = selection.attr("transform");
-        // We do a simple translate update for the dragging effect
-        // Fully recalculating lines on pure drag in a static tree layout is complex 
-        // without force physics, so we just let them visually nudge the nodes.
-        const match = /translate\(([^,]+),([^)]+)\)/.exec(transform);
-        if (match) {
-          const cx = parseFloat(match[1]) + event.dx;
-          const cy = parseFloat(match[2]) + event.dy;
-          selection.attr("transform", `translate(${cx},${cy})`);
-        }
-      });
-      
-    node.call(drag as any);
-
-    node
-      .append("circle")
-      .attr("fill", (d) => (d.children ? treeColors.link : treeColors.node))
-      .attr("r", 3.5);
-
-    node
-      .append("text")
-      .attr("dy", isVertical ? "1.25em" : "0.31em")
-      .attr("x", (d) => (isVertical ? 0 : d.children ? (treeDirection === "RL" ? 6 : -6) : (treeDirection === "RL" ? -6 : 6)))
-      .attr("text-anchor", (d) => (isVertical ? "middle" : d.children ? (treeDirection === "RL" ? "start" : "end") : (treeDirection === "RL" ? "end" : "start")))
-      .text((d) => d.data.name)
-      .style("font-size", `${treeFontSize}px`)
-      .attr("fill", "#DCE5E7")
-      .clone(true)
-      .lower()
-      .attr("stroke", "#080c22")
-      .attr("stroke-width", 3);
-
-    // Initial transform to center the tree depending on orientation
-    const defaultTransform = d3.zoomIdentity
-       .translate(isVertical ? width / 2 : treeDirection === "RL" ? width - dy : dy, isVertical ? (treeDirection === "BT" ? height - dy : dy) : height / 2 - (x0 + x1) / 2)
-       .scale(1);
-    svg.call(zoom.transform as never, defaultTransform);
-
-    resetRef.current = () => {
-      svg.transition().duration(500).call(zoom.transform as never, defaultTransform);
-    };
-
-    return () => {
-      if (svgRef.current) {
-         svgRef.current.remove();
-         svgRef.current = null;
-      }
-    };
-  }, [rootData, treeLayout, treeDirection, treeSpacing, treeFontSize, treeColors, size, showArrayIndices, perfBlocked]);
-
-  return (
-    <div className="graph-panel" ref={containerRef} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
-      {perfBlocked ? (
+  if (perfBlocked) {
+    return (
+      <div
+        className="graph-panel"
+        style={{ width: "100%", height: "100%", overflow: "hidden" }}
+      >
         <PerfWarning
           nodeCount={nodeCount}
           viewLabel="Tree"
           countLabel="JSON tree entities"
           onBypass={() => setBypassPerf(true)}
         />
-      ) : (
-        <button
-          className="view-reset-btn"
-          onClick={() => resetRef.current()}
-          title="Reset view"
-        >
-          ⤢
-        </button>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <ModuleHost
+      moduleId="tree"
+      data={data}
+      params={params as unknown as Record<string, unknown>}
+      onParamChange={handleParamChange}
+    />
   );
 }
